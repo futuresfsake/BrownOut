@@ -1,0 +1,78 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install gitleaks (pinned, checksum verified)
+        run: |
+          version="$(node -p "JSON.parse(require('fs').readFileSync('tools/versions.json','utf8')).gitleaks")"
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${version}"
+          archive="gitleaks_${version}_linux_x64.tar.gz"
+          curl -fsSL -O "${base}/${archive}" -O "${base}/gitleaks_${version}_checksums.txt"
+          sha256sum --ignore-missing -c "gitleaks_${version}_checksums.txt"
+          tar -xzf "${archive}" gitleaks
+          sudo install gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Install semgrep (pinned)
+        run: |
+          version="$(node -p "JSON.parse(require('fs').readFileSync('tools/versions.json','utf8')).semgrep")"
+          python -m pip install --disable-pip-version-check "semgrep==${version}"
+          semgrep --version
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Tests with coverage
+        run: npm run test:coverage
+
+      - name: Secrets in history
+        run: node tools/secrets.mjs history
+
+      - name: Tracked files and commit messages
+        run: |
+          node tools/check-tracked.mjs files
+          node tools/check-tracked.mjs messages
+
+      - name: Static analysis
+        run: node tools/semgrep.mjs
+
+      - name: Dependency audit
+        run: node tools/audit.mjs

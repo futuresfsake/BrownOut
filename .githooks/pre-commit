@@ -1,0 +1,3 @@
+#!/bin/sh
+# Secrets, tracked-file checks, lint, type-check and tests. See docs/07-process/workflows.md.
+exec node tools/hook.mjs pre-commit

@@ -1,0 +1,13 @@
+title = "BrownOut"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated or installed folders that are not part of the repository"
+paths = [
+  '''node_modules/''',
+  '''\.tools/''',
+  '''coverage/''',
+  '''dist/''',
+]

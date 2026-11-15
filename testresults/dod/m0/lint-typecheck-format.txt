@@ -1,0 +1,9 @@
+﻿npm run lint
+exit: 0
+npm run typecheck
+exit: 0
+npm run format:check
+Checking formatting...
+All matched files use Prettier code style!
+exit: 0
+
