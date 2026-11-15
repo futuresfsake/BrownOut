@@ -12,7 +12,7 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: ["src/**/*.ts"],
       // Thin wrappers around the terminal: the logic they call is tested.
-      exclude: ["src/cli/play.ts", "src/tools/validate.ts"],
+      exclude: ["src/cli/play.ts", "src/tools/**"],
       thresholds: {
         "src/engine/**": { lines: 90 },
         lines: 80,

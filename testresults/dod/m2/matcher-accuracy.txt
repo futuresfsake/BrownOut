@@ -1,0 +1,9 @@
+﻿dial-tone: 62 labelled phrasings
+  right reading first:                 57 (91.9%, target 85%)
+  first or offered as "did you mean":  62 (100.0%, target 97%)
+  asked  "what's going on overall?" -> choose: Look at the overall picture
+  asked  "is someone attacking us" -> choose: Look at the traffic spike
+  asked  "could this be a ddos" -> choose: Look at the traffic spike
+  asked  "is the core network up" -> choose: Check the packet gateway and core network
+  asked  "Mika, read through the authentication logs" -> choose: Pull the auth-core logs / Review access logs for unusual reads of subscriber data
+

@@ -123,6 +123,8 @@ const StakeholderSchema = z.strictObject({
   channel: z.enum(["chat", "email", "press"]),
   // Who is hurt most by a false statement. Used by scoring.
   audience: z.enum(["internal", "sensitive", "press"]),
+  // Other ways a player might refer to this person: "legal", "the reporter". Used by the matcher.
+  aliases: z.array(z.string().min(1)).optional(),
 });
 
 const SystemSchema = z.strictObject({
@@ -208,6 +210,8 @@ const ClaimTopicSchema = z.strictObject({
   supportsDenies: z.array(id),
   // When a false claim on this topic comes to light.
   surfacesWhen: ConditionSchema.optional(),
+  // Words that show a typed message is about this topic. Used by the matcher.
+  phrases: z.array(z.string().min(1)).optional(),
 });
 
 const ObligationSchema = z.strictObject({
@@ -234,7 +238,19 @@ const BeatSchema = z.strictObject({
   purpose: z.string().min(1),
   facts: z.array(z.string()),
   fallbackText: z.string().min(1),
+  // Other wordings of the same message for when the sender's trust is low or high.
+  variants: z.strictObject({ low: z.string().optional(), high: z.string().optional() }).optional(),
   quotesClaim: id.optional(),
+});
+
+// A piece of debrief text, shown when its condition holds at the end of the session.
+const LessonSchema = z.strictObject({
+  id,
+  kind: z.enum(["fell", "avoided"]),
+  when: ConditionSchema,
+  text: z.string().min(1),
+  // Which event to point at: its type, and optionally the id or topic it carries.
+  evidence: z.strictObject({ type: z.string().min(1), id: id.optional() }).optional(),
 });
 
 const IdealStepSchema = z.strictObject({ atMinute: minutes, intent: IntentSchema });
@@ -270,7 +286,11 @@ export const ScenarioSchema = z.strictObject({
   }),
   scoring: z.strictObject({ rootCauseClue: id, causeTargetMinute: z.number().int().min(1) }),
   idealPath: z.array(IdealStepSchema).min(1),
+  // Situation-specific ways of saying things: canonical word, then what players may type instead.
+  synonyms: z.record(z.string(), z.array(z.string().min(1))).optional(),
+  lessons: z.array(LessonSchema).optional(),
 });
+export type Lesson = z.infer<typeof LessonSchema>;
 export type Scenario = z.infer<typeof ScenarioSchema>;
 export type Stakeholder = z.infer<typeof StakeholderSchema>;
 export type Beat = z.infer<typeof BeatSchema>;

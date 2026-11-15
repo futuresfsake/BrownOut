@@ -9,9 +9,9 @@ Each requirement is testable. The "Check" column says how.
 | ID | Requirement | Check |
 |---|---|---|
 | FR-01 | A player can start a session by choosing a scenario. No sign-up. | Browser test |
-| FR-02 | A session has an ID that cannot be guessed (at least 128 bits of randomness). | Unit test |
-| FR-03 | A session expires two hours after its last turn. | Unit test with a fake clock |
-| FR-04 | Only one turn per session is processed at a time. A second request while one is running gets HTTP 409. | Integration test |
+| FR-02 | A session lives in the browser tab. Nothing about it is sent anywhere. | Browser test with network requests counted |
+| FR-03 | A session survives a page reload within the same tab. | Browser test |
+| FR-04 | Only one turn is processed at a time. Input is ignored while a turn resolves. | Unit test |
 | FR-05 | A session can be given a seed. Without one, the server picks one and reports it. | Unit test |
 
 ### Turns
@@ -38,29 +38,29 @@ Each requirement is testable. The "Check" column says how.
 | FR-18 | Trust changes only through the rules in simulation-engine.md. | Engine test |
 | FR-19 | The session ends in exactly one of: resolved, relieved, time out, ended by player. | Engine test |
 
-### Model output
+### Understanding and words
 
 | ID | Requirement | Check |
 |---|---|---|
-| FR-20 | All model output is validated against a zod schema before use. | Unit test with invalid samples |
-| FR-21 | Narrated text may contain only numbers that the engine supplied for that piece of text. A violation is retried once, then replaced with fallback text. | Unit test of the guard |
-| FR-22 | Narrated text must not contain the text of a clue the player has not revealed. | Scripted playthrough check |
-| FR-23 | When a model call fails, is declined, is cut off, or fails validation twice, the turn completes with authored fallback text. | Integration test with a failing stub |
-| FR-24 | Model output is displayed as plain text. It is never interpreted as HTML or Markdown. | Unit test with markup in a cassette |
+| FR-20 | The matcher turns typed text into an intent using only the situation's data and shared word lists. Nothing under `src` makes a network request. | Unit tests, and a test that fails on any network use |
+| FR-21 | Every number in a message is filled in by the engine or is listed in that message's facts. | Scenario validator |
+| FR-22 | When the best two or three candidates are close, the player is asked which they meant, and no sim time passes until they choose. | Unit test |
+| FR-23 | When nothing is close, the turn costs one minute and the three nearest options are shown. | Unit test |
+| FR-24 | All text is displayed as plain text. It is never interpreted as HTML or Markdown. | Unit test with markup in a situation and in typed text |
 
 ### Debrief
 
 | ID | Requirement | Check |
 |---|---|---|
 | FR-25 | The score is computed by the engine and is identical for identical event logs. | Unit test |
-| FR-26 | Every statement in the written debrief cites at least one event ID, and every cited ID exists in the log. | Unit test of the citation check |
+| FR-26 | Every statement in the debrief is tied to at least one event ID, and every such ID exists in the log. | Unit test |
 
 ### Operation
 
 | ID | Requirement | Check |
 |---|---|---|
-| FR-27 | Token usage and estimated cost are recorded for every model call. When the day's total reaches the configured budget, live play is refused until the next day and replay still works. | Integration test |
-| FR-28 | With no API key configured, the server starts in replay mode and says so in the interface. | Integration test |
+| FR-27 | The matcher reaches the accuracy targets in local-play.md on each situation's labelled set. | Test suite |
+| FR-28 | The built game is a set of static files and is fully playable with no server and no key. | Browser test against the built files |
 | FR-29 | A finished session can be exported as JSON and loaded again. A loaded file is validated before anything is rendered from it. | Unit and browser test |
 
 ### Views
@@ -79,16 +79,16 @@ Each requirement is testable. The "Check" column says how.
 
 | ID | Requirement | Check |
 |---|---|---|
-| NFR-01 | Latency target for a live turn: the resolved state reaches the browser within 4 seconds and the written text within 12 seconds, at the median. These are targets to confirm or revise with the M2 spike. | M2 measurements |
+| NFR-01 | A turn resolves and renders in under 100 milliseconds on a mid-range laptop. | Benchmark test |
 | NFR-02 | The engine resolves a turn in under 20 milliseconds without the model. | Benchmark test |
-| NFR-03 | The API key exists only in the server's environment. It is never sent to the browser, logged or written to an export. | Code review, bundle search in CI |
+| NFR-03 | There is no secret anywhere in the project: no API key and no server environment. | gitleaks, code review |
 | NFR-04 | Text contrast meets WCAG 2.2 AA at every severity level of the interface. | Automated and manual check |
 | NFR-05 | The whole game is playable with a keyboard. New messages are announced to screen readers. | Browser test, manual check |
 | NFR-06 | The interface works from 360 pixels wide. | Screenshot evidence |
 | NFR-07 | No personal data is collected. No analytics, no cookies beyond what a session needs. | Code review |
 | NFR-08 | No high or critical vulnerability in production dependencies at release. | `npm audit --omit=dev` |
 | NFR-09 | Engine line coverage at or above 90 percent. Overall at or above 80 percent. | Coverage report |
-| NFR-10 | The server refuses more than 10 turn requests per minute per session and more than 5 new sessions per hour per address. | Integration test |
+| NFR-10 | Typed input is limited to 600 characters and a loaded replay file to 512 KB. | Unit test |
 | NFR-11 | The 3D view meets the performance targets in ui-design.md on the two reference devices. These are targets to confirm or revise with the M3 stage B spike. | Readings saved as evidence |
 | NFR-12 | The 3D code is a separate chunk. The start screen is interactive before it loads, and flat view never downloads it. | Build report, network trace |
 | NFR-13 | When nothing in the scene is changing, no frames are drawn. | Frame counter in a browser test |

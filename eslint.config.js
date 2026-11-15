@@ -53,4 +53,11 @@ export default tseslint.config(
     files: ["src/**/*.ts", "tests/**/*.ts"],
     rules: { "security/detect-object-injection": "off" },
   },
+  {
+    // The matcher builds two patterns from words: people's names and aliases, and synonym lists.
+    // Both come from the situation's authored data, never from what the player typed, and every
+    // word is regex-escaped before it is joined. Typed text is only ever the string being searched.
+    files: ["src/matcher/**/*.ts"],
+    rules: { "security/detect-non-literal-regexp": "off" },
+  },
 );

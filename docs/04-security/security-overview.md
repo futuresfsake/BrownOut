@@ -1,5 +1,7 @@
 # Security overview
 
+> **Updated by DL-24 and DL-26 (2026-11-16).** There is no API key, no model and no server, so the rows below about the key, model spend, prompt injection and session IDs no longer describe a risk. What remains: the visitor's browser (all text is rendered as text, loaded replay files are validated), dependencies, and keeping secrets and personal data out of the repository. This document is rewritten at M3.
+
 BrownOut has no accounts and stores no personal data, so the things worth protecting are few: the API key, the author's money, the integrity of a session, and the visitor's browser.
 
 ## Assets and threats

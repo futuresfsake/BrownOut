@@ -21,6 +21,7 @@
     "check:semgrep": "node tools/semgrep.mjs",
     "validate:scenarios": "node tools/validate-scenario.mjs",
     "play": "tsx src/cli/play.ts",
+    "accuracy": "tsx src/tools/accuracy.ts",
     "tools:semgrep": "node tools/install-semgrep.mjs",
     "hooks:install": "node tools/install-hooks.mjs"
   },

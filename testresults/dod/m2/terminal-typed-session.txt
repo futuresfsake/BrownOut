@@ -1,0 +1,131 @@
+﻿
+Dial Tone
+
+You are the on-call engineering lead at Halden Mobile. Your pager went off a minute ago: customers in two regions are failing to connect, and the dashboard shows errors on subscriber authentication and on billing. Mika Tan is the engineer on shift and will carry out what you ask.
+
+Type what you do, or what you tell someone, in your own words. Anyone in your seat could look things up, give orders, or talk to the people who are about to start messaging you.
+
+Type "?" to list what you could do, or "@name message" to reply to someone.
+  02:14  ALERT 02:14: subscriber attach failures rising in two regions. Billing errors are also elevated.
+  02:14  Duty - Status page updated: open
+
+[02:14]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+
+What do you do? 
+Did you mean:
+   1. Pull the auth-core logs
+   2. Review access logs for unusual reads of subscriber data
+
+[02:14]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+
+Which did you mean? (number, or type again) 
+  02:14  You: Pull the auth-core logs
+  02:14  Mika: on it - Pull the auth-core logs.
+
+[02:15]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:19.
+
+What do you do? 
+  (read as: Ask Mika: Find out what changed on auth-core)
+  02:15  You: Find out what changed on auth-core
+  02:15  Mika: I'll do that next - Find out what changed on auth-core.
+
+[02:16]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:19.
+
+What do you do? 
+  (read as: To Ramon Villareal)
+  02:16  You to Ramon Villareal: No ETA yet, I'll update you in ten minutes
+  02:16  You promised Ramon Villareal: an update (by 02:26)
+  02:17  Ramon: What's the ETA? I need something I can tell the board in 10 minutes.
+
+[02:17]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:19.
+        Waiting for a reply: Ramon Villareal
+
+What do you do? 
+  02:17  That did not match anything you can do here. Try rephrasing.
+Nearest things you could do:
+   1. Look at the overall picture
+   2. Check whether last night's billing deploy is involved
+   3. Look at the traffic spike
+
+[02:18]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:19.
+        Waiting for a reply: Ramon Villareal
+
+Which did you mean? (number, or type again) 
+  (read as: Ask Mika: Roll back the certificate bundle on the 6 bad nodes, one at a time)
+  02:18  Mika: I already have one job running and one waiting. Cancel one first.
+
+[02:18]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:19.
+        Waiting for a reply: Ramon Villareal
+
+What do you do? 
+  02:19  Mika: TLS handshakes have been failing on 6 of 12 auth-core nodes since 01:52.
+  02:19  Mika: on it - Find out what changed on auth-core.
+
+[02:19]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:21.
+        Waiting for a reply: Ramon Villareal
+
+What do you do? 
+Did you mean:
+   1. Send the all-clear
+
+[02:19]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:21.
+        Waiting for a reply: Ramon Villareal
+
+Which did you mean? (number, or type again) 
+[02:19]  Subscriber authentication: degraded | Billing API: degraded | Packet gateway: ok | Public status page: Shows all systems normal
+        Customers affected: unknown | Support tickets open: unknown | Attach success rate (percent): unknown
+        Mika is busy until 02:21.
+        Waiting for a reply: Ramon Villareal
+
+Which did you mean? (number, or type again) 
+Lost control: the incident is still running at 02:19, with a score of 28.
+
+containment: 0
+  +0  Customers affected over the incident, compared with the best and worst possible (28,790,000 customer-minutes)
+
+diagnosis: 30
+  +0  The root cause was never found
+
+communication: 10
+  +0  Messages answered in time: 0 of 1
+  +0  Promises kept: 0 of 1
+  +10  Regular updates to the CTO, support and comms: 1 of 3 windows covered
+
+honesty: 100
+
+obligations: 0
+  +0  Status page updated: not done
+
+One thing: Your weakest area was containment, at 0 out of 100.
+
+A stronger response:
+  02:14  Look at the overall picture
+  02:17  Tell Ramon Villareal: No ETA yet. I will update you in ten minutes.
+  02:18  Find out what changed on auth-core
+  02:20  Roll back the certificate bundle on the 6 bad nodes, one at a time
+  02:21  Tell Daniel Osei: Please update the status page: we have an outage.
+  02:22  Tell Joy Antolin: Outage in two regions, we know the cause, fix under way. Tell customers we are working on it.
+  02:23  Tell Ramon Villareal: A certificate bundle on auth-core is the cause. Rolling it back now.
+  02:29  Tell Carla Whitlock: We are aware of an outage in two regions. We have identified the cause and a fix is under way.
+  02:31  Check whether emergency calling is affected
+  02:32  Tell Priya Nair: This is an availability incident. I see no sign of data exposure so far. I will confirm after the access logs are reviewed.
+  02:33  Tell Daniel Osei: Emergency calling was affected. Please notify the regulator duty line.
+  02:34  Confirm that attach success is back to normal
+  02:36  Tell Ramon Villareal, Joy Antolin, Daniel Osei: Service is restored. All clear.
+
