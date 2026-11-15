@@ -27,7 +27,7 @@ base = 100 * (worst - actual) / (worst - best)      clamped to 0..100
 score = base - 10 for each harmful mitigation applied
 ```
 
-`worst` is the no-action session and `best` is the ideal path, both precomputed per scenario by the validator.
+`worst` is the no-action session and `best` is the ideal path, both computed per scenario by running them through the engine. A session that stops before the scenario's last minute is projected forward as if nothing more were done, so ending an unfixed incident early does not look like good containment.
 
 ### Diagnosis
 

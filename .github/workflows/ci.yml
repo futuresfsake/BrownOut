@@ -63,6 +63,9 @@ jobs:
       - name: Tests with coverage
         run: npm run test:coverage
 
+      - name: Scenario validation
+        run: npm run validate:scenarios
+
       - name: Secrets in history
         run: node tools/secrets.mjs history
 

@@ -89,7 +89,7 @@ interface Stakeholder {
 - Every clue is revealed by at least one investigation.
 - Every `requires` condition can be satisfied.
 - Replaying `ideal-path.json` ends in `resolved`, with a score at or above 85.
-- Replaying no actions at all ends in `timeout`.
+- Replaying no actions at all does not resolve the incident. In Dial Tone it ends as `relieved`, because the unanswered CTO takes over at minute 54.
 - Each harmful mitigation produces a worse containment score than not applying it.
 - Every beat fires in at least one of the scripted playthroughs.
 - No fallback text contains a number that is missing from its facts.

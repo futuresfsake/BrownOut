@@ -1,0 +1,80 @@
+﻿  02:14  ALERT 02:14: subscriber attach failures rising in two regions. Billing errors are also elevated.
+  02:14  Duty - Status page updated: open
+  02:14  You: Look at the overall picture
+  02:14  Mika: on it - Look at the overall picture.
+  02:16  Mika: Failures are in the North and Coastal regions only. auth-core is rejecting about a third of sign-in attempts. Everything else looks normal at this level.
+  02:17  Ramon: What's the ETA? I need something I can tell the board in 10 minutes.
+  02:17  You to Ramon Villareal: No ETA yet. I will update you in ten minutes.
+  02:17  Ramon Villareal: trust up (answered in time)
+  02:17  You promised Ramon Villareal: an update (by 02:27)
+  02:18  You: Find out what changed on auth-core
+  02:18  Mika: on it - Find out what changed on auth-core.
+  02:20  Mika: A scheduled certificate rotation ran on auth-core at 01:52. The 6 failing nodes loaded a certificate bundle with no intermediate certificate.
+  02:20  You: Roll back the certificate bundle on the 6 bad nodes, one at a time
+  02:20  Mika: on it - Roll back the certificate bundle on the 6 bad nodes, one at a time.
+  02:21  Joy: About 480 tickets open, all 'no signal' or 'can't connect'. What do I tell customers?
+  02:21  You to Daniel Osei: Please update the status page: we have an outage.
+  02:21  Daniel Osei: trust up (you kept them informed)
+  02:21  You asked for: Update the public status page.
+  02:22  Duty - Status page updated: met
+  02:22  You to Joy Antolin: Outage in two regions, we know the cause, fix under way. Tell customers we are working on it.
+  02:22  Joy Antolin: trust up (answered in time)
+  02:23  You to Ramon Villareal: A certificate bundle on auth-core is the cause. Rolling it back now.
+  02:23  Ramon Villareal: trust up (you kept them informed)
+  02:23  You kept your word to Ramon Villareal: an update
+  02:23  Ramon Villareal: trust up (a promise was kept)
+  02:23  You said: "A certificate bundle on auth-core is the cause"
+  02:23  Ramon Villareal: trust up (accurate statement)
+  02:24  Carla Whitlock, The Daily Circuit: Customers are posting that Halden Mobile is down. Can you comment before 02:45?
+  02:29  Priya Nair: Could any customer data have been exposed? I need a yes or no, and what it is based on.
+  02:29  You to Carla Whitlock: We are aware of an outage in two regions. We have identified the cause and a fix is under way.
+  02:29  Carla Whitlock: trust up (answered in time)
+  02:29  You said: "We have identified the cause"
+  02:29  Carla Whitlock: trust up (accurate statement)
+  02:30  Mika: All 6 nodes are on the previous bundle. Attach success is recovering.
+  02:31  You: Check whether emergency calling is affected
+  02:31  Mika: on it - Check whether emergency calling is affected.
+  02:32  You to Priya Nair: This is an availability incident. I see no sign of data exposure so far. I will confirm after the access logs are reviewed.
+  02:32  Priya Nair: trust up (answered in time)
+  02:32  You said: "No sign of exposure so far, to be confirmed"
+  02:33  Mika: Affected devices cannot place emergency calls reliably.
+  02:33  Duty - Regulator notified: open
+  02:33  You to Daniel Osei: Emergency calling was affected. Please notify the regulator duty line.
+  02:33  Daniel Osei: trust up (you kept them informed)
+  02:33  You asked for: Notify the regulator duty line.
+  02:34  Duty - Regulator notified: met
+  02:34  You: Confirm that attach success is back to normal
+  02:34  Mika: on it - Confirm that attach success is back to normal.
+  02:36  Mika: Attach success is back to baseline.
+  02:36  Joy: Recovery looks good from our side. What wording do my agents use for the all-clear?
+  02:36  Daniel: I need the all-clear wording to update the status page.
+  02:36  Duty - All-clear sent: open
+  02:36  You to Ramon Villareal, Joy Antolin, Daniel Osei: Service is restored. All clear.
+  02:36  Ramon Villareal: trust up (you kept them informed)
+  02:36  Joy Antolin: trust up (answered in time)
+  02:36  Daniel Osei: trust up (answered in time)
+  02:36  You asked for: Send the all-clear.
+  02:37  Duty - All-clear sent: met
+  02:37  The incident is resolved.
+
+Ended: resolved. Score 100 - Strong response.
+
+containment: 100
+  +100  Customers affected over the incident, compared with the best and worst possible (1,602,000 customer-minutes)
+
+diagnosis: 100
+  +40  You found the root cause
+  +30  Time to the root cause: minute 6, target 6
+
+communication: 100
+  +40  Messages answered in time: 6 of 6
+  +30  Promises kept: 1 of 1
+  +30  Regular updates to the CTO, support and comms: 6 of 6 windows covered
+
+honesty: 100
+
+obligations: 100
+  +100  Status page updated: met
+  +100  Regulator notified: met
+  +100  All-clear sent: met
+

@@ -171,10 +171,10 @@ Conditional beats:
 7. Minute 13: update CTO with cause and plan.
 8. Minute 15: reply to counsel: availability incident, no sign of exposure, will confirm after access logs.
 9. Minute 17: fix lands. `emergency-calls`, then notify the regulator through comms.
-10. Minute 20: `verify-recovery`, then `access-logs`.
+10. Minute 20: `verify-recovery`. (`access-logs` takes 10 minutes and the incident resolves first, so the ideal path leaves it out; the player's "no sign of exposure so far" to counsel is correctly stated as uncertain.)
 11. Minute 22: all-clear to CTO, support and comms.
 
-Best case: resolved by about minute 22. Worst case: no action, 520,000 customers affected at minute 90.
+Best case: resolved at minute 23. Worst case: no action, 520,000 customers affected at minute 90 (the CTO takes over at minute 54, and the score is projected forward as if nothing more were done).
 
 ---
 
