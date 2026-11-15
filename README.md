@@ -1,0 +1,68 @@
+# BrownOut
+
+A crisis war-room simulator. You are the person in charge of a company incident. The model plays everyone else: the CTO, support, legal, the press, and the incident itself.
+
+> **Status: design phase.** This repository holds the product and technical documentation. There is no application code yet. The build starts at milestone M0 in [docs/01-product/milestones.md](docs/01-product/milestones.md).
+
+## What it is
+
+It is 02:14. You are the on-call engineering lead at a mobile carrier. Customers cannot connect and the dashboard is red. You type what you do, in your own words:
+
+> Check whether last night's deploy touched the billing service.
+
+BrownOut answers with what you would find. Some of it helps. Some of it points the wrong way, because real incidents do.
+
+The situation keeps moving whether or not you act:
+
+- The CTO wants an ETA within ten minutes, and remembers what you promise.
+- Support reports 400 tickets and climbing.
+- A journalist asks for comment because customers are posting about it.
+- Legal asks whether customer data could have been exposed.
+
+You decide what to do first and what to tell each person. If you tell the press that everything is fine and it later turns out not to be, that comes back.
+
+When the incident ends, you get a debrief: what you handled well, what you missed, and what a stronger response would have looked like, with every point tied to a moment in your own timeline.
+
+A session takes about ten minutes.
+
+## How it works
+
+One rule shapes the whole design: **the engine owns the facts, the model owns the words.**
+
+- A deterministic engine, written in TypeScript, holds the clock, the numbers, the hidden root cause, every promise you made and every claim you put on the record. It decides what happens.
+- Claude Fable 5.2 reads your free-text action and maps it to something the engine understands. After the engine has resolved the turn, the model writes the messages, findings and press copy from the resolved state.
+- The model cannot change a number or reveal a fact the engine has not released. Text that cites a number the engine did not supply is rejected.
+- The score is computed by the engine from the event log. The model writes the debrief narrative around that score and has to cite the events it refers to.
+
+Details: [high-level design](docs/03-design/high-level-design.md), [simulation engine](docs/03-design/simulation-engine.md), [model contract](docs/03-design/model-contract.md).
+
+## Planned stack
+
+| Part | Choice |
+|---|---|
+| Language | TypeScript, Node 22 |
+| Server | Express 5, zod for every boundary |
+| Client | React with Vite |
+| Model | Claude Fable 5.2 through the official `@anthropic-ai/sdk` |
+| Storage | In-memory sessions, exportable event logs, no database |
+| Tests | Vitest, Playwright, recorded model responses for repeatable runs |
+
+Reasons are in the [decision log](docs/00-overview/decision-log.md).
+
+## Documentation
+
+Start with [docs/README.md](docs/README.md). It lists every document and the order to read them in.
+
+| If you want | Read |
+|---|---|
+| The idea in two pages | [Vision](docs/00-overview/vision.md) |
+| How a session plays | [Gameplay](docs/01-product/gameplay.md) |
+| What will be built, in what order | [Milestones](docs/01-product/milestones.md) |
+| How the engine and the model split the work | [High-level design](docs/03-design/high-level-design.md) |
+| The first scenario, fully written out | [Scenarios](docs/03-design/scenarios.md) |
+
+## The name
+
+A brownout is a partial failure. The voltage sags, the lights dim, and things half-work. Most real incidents look like that: nothing is fully down, nothing is fully up, and someone has to decide what to do with incomplete information.
+
+All companies, people and events in the scenarios are fictional.
