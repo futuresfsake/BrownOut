@@ -13,6 +13,7 @@ Each entry has a default. The build proceeds on the default until the owner deci
 | O-05 | Model-generated scenarios? | Not in version 1. If added later, the generated scenario must pass the same schema and solvability checks as an authored one. | After M6 |
 | O-06 | Is pausing allowed? | Yes. It is a practice tool. A "no pause" option can come later. | M3 |
 | O-07 | Should scenario 1 be set in a named country with its real regulator? | No. Fictional carrier, fictional regulator, simplified deadlines. Real law would need review by someone qualified. | M5 |
+| O-08 | Is sound on by default? | Off. The player turns it on from the status strip. | M3 |
 
 ## Risks
 
@@ -26,6 +27,9 @@ Each entry has a default. The build proceeds on the default until the owner deci
 | R-06 | The player tries to instruct the model through the action box. | Attempted prompt injection. | Player text is data inside a delimited field. The interpreter can only output enumerated IDs. The engine decides outcomes. See security-overview.md. |
 | R-07 | Scope. Three scenarios, a custom interface and a model pipeline is a lot. | The build stalls before anything is playable. | Scenario 1 is playable from a terminal at the end of M1 with no model and no interface. Scenarios 2 and 3 come last. |
 | R-08 | An API change makes the documented request shape wrong. | Calls fail with a 400. | model-contract.md states what was checked and when. Confirm against the current SDK documentation at the start of M2. |
+| R-09 | The 3D room takes far longer than a flat page and delays everything after it. | The project stalls at M3. | M3 is split: stage A builds the panels and flat view and is a complete, playable interface. Stage B adds the room on top. Geometry is simple shapes built in code (DL-20). If stage B slips, the game still ships in flat view. |
+| R-10 | The room runs badly on ordinary laptops and phones. | Stutter, heat, drained battery. | Frames are drawn only when something changes. No real-time shadows or post-processing. Budgets in ui-design.md are measured on two reference devices. Flat view is offered when the frame rate stays low. |
+| R-11 | The room looks like a generic 3D demo. | It undercuts the point of building it. | One committed style (card model, toon shading, inked edges, the project palette). The "not allowed" list in ui-design.md. Screenshots reviewed by the owner before stage B is merged. |
 
 ## Known limits
 
@@ -40,3 +44,6 @@ These are accepted for version 1 and should be stated in the README once the app
 | L-05 | English only. |
 | L-06 | The score rewards the authored ideal path. A valid unconventional response can score lower than it deserves. The debrief says so when the player used unmatched actions. |
 | L-07 | Regulatory and legal content is fictional and simplified. |
+| L-08 | No people are modelled in the room. Stakeholders are devices; the on-shift engineer is a lit desk. |
+| L-09 | The 3D room needs WebGL 2. Without it the game runs in flat view. |
+| L-10 | The camera has five fixed positions. The player cannot walk around or look freely. |

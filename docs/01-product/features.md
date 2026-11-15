@@ -12,12 +12,27 @@ Priority: **must** is needed for version 1, **should** is planned for version 1 
 | F-04 | Wait button (five sim minutes) | must | M3 |
 | F-05 | Idle clock with pause | must | M3 |
 | F-06 | One-line restatement of how each action was understood | must | M2 |
-| F-07 | Board with clock, system status and hard numbers | must | M3 |
-| F-08 | Duty log of actions, findings and alerts | must | M3 |
-| F-09 | Inbox with one thread per stakeholder and a press thread | must | M3 |
+| F-07 | Board panel with clock, system status and hard numbers | must | M3 |
+| F-08 | Log panel of actions, findings and alerts | must | M3 |
+| F-09 | Inbox panel with one thread per stakeholder, and a press panel | must | M3 |
+| F-13 | Decision box and status strip on screen at all times, in both views | must | M3 |
 | F-10 | Open commitments shown in the thread they were made in, with due time | should | M3 |
 | F-11 | End the incident early | must | M3 |
 | F-12 | Seed shown on the debrief so a run can be repeated | should | M4 |
+
+## Room
+
+| ID | Feature | Priority | Milestone |
+|---|---|---|---|
+| F-60 | 3D war room with wall board, clock, logbook, desk monitor, phone, television and a second desk | must | M3 stage B |
+| F-61 | Five camera stations, reached by clicking an object, by number keys, or by swiping on a phone | must | M3 stage B |
+| F-62 | HTML panel beside the object at each station | must | M3 stage B |
+| F-63 | Objects signal when they need attention: phone lights, lamp stays on while unanswered, television turns on | must | M3 stage B |
+| F-64 | Room lights dim in three steps with severity, and the emergency strip comes on | must | M3 stage B |
+| F-65 | Flat view with every feature of the 3D view, switchable at any time | must | M3 stage A |
+| F-66 | Automatic offer of flat view when 3D is unavailable or slow | must | M3 stage B |
+| F-67 | Generated sound for messages, alerts and severity, with a mute control | should | M3 stage B |
+| F-68 | Modelled characters | later | |
 
 ## Simulation
 

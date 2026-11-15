@@ -44,15 +44,31 @@ Connect interpret and narrate. Start with a measurement spike.
 
 ## M3: Web interface
 
-Build the board, log and inbox against the turn stream.
+Two stages. Stage A is a complete interface on its own, so the game is playable in a browser before any 3D work starts (risk R-09).
 
-- State the visual direction in the pull request before building, as [ui-design](../03-design/ui-design.md) requires.
-- Scenario picker, briefing, play screen, all states listed in ui-design.md.
+State the visual direction in each pull request before building, as [ui-design](../03-design/ui-design.md) requires.
+
+### Stage A: panels and flat view
+
+- Scenario picker, briefing, and the play screen in flat view against the turn stream.
+- Board, log, inbox and press panels, the decision box and the status strip, with all panel states listed in ui-design.md.
 - Idle clock, pause, wait, end.
-- Desktop and mobile layouts.
+- Desktop and phone layouts.
 - Playwright tests running against a cassette.
 
-**Exit:** scenario 1 is playable in a browser from briefing to an ending. Screenshots at 1440, 768 and 375 pixels wide are saved as evidence. Automated accessibility checks report no serious or critical issue. Keyboard-only play works.
+**Exit A:** scenario 1 is playable in a browser in flat view from briefing to an ending. Screenshots at 1440, 768 and 375 pixels wide are saved as evidence. Automated accessibility checks report no serious or critical issue. Keyboard-only play works.
+
+### Stage B: the 3D room
+
+- Start with a one-day spike: the empty room, one station move and one HTML panel beside an object, measured on the two reference devices. Confirm the font and content-security-policy questions in ui-design.md.
+- The room: walls, desk, wall board, clock, logbook, desk monitor, phone, television, second desk, ceiling lights, emergency strip.
+- Five camera stations, the panels from stage A anchored to their objects, the always-on decision box and status strip.
+- Object signals and the three light levels, driven by the same state as the panels.
+- Loading the 3D code separately during the briefing. Fallback and the offer of flat view.
+- Phone layout for the room.
+- Sound, if time allows (F-67).
+
+**Exit B:** scenario 1 is playable in the 3D room from briefing to an ending on a laptop and on a phone. Switching between 3D and flat view mid-session loses nothing. Every station is reachable by keyboard. With WebGL turned off the game starts in flat view with a notice. The performance targets in ui-design.md are met on both reference devices, or the misses are written down with the readings. The owner has reviewed the screenshots (risk R-11).
 
 ## M4: Debrief, export and replay
 

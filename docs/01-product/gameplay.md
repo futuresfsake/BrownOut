@@ -37,6 +37,8 @@ One input can do several things. "Tell Mika to roll back the cert bundle on two 
 
 ## What the player sees
 
+The player sits at a desk in a 3D operations room. Each of the three things below is an object in the room and an HTML panel that opens beside it: the wall board, the logbook, and the phone and desk monitor. The press appears on a television. The room itself reports how things are going: lamps stay lit on devices with unanswered messages, and the ceiling lights dim as the incident gets worse. The same panels are available as a flat page. See [UI design](../03-design/ui-design.md).
+
 **Board.** Sim clock, minutes elapsed, status of each system, and the hard numbers: customers affected, support tickets open, error rate. Numbers the player has no way to know yet are shown as unknown, not as zero.
 
 **Log.** The duty log. Every action the player took, restated in one line as the engine understood it, followed by what was found or what happened. Alerts also land here.
