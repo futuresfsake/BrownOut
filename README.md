@@ -25,6 +25,12 @@ When the incident ends, you get a debrief: what you handled well, what you misse
 
 A session takes about ten minutes.
 
+## The room
+
+You play from a desk in a 3D operations room. The wall board shows the numbers, the phone lights up when the CTO writes, the television comes on when the press publishes, and the ceiling lights sag as the incident gets worse. Look at an object and its contents open beside it as an ordinary readable panel. The box you type in never leaves the screen.
+
+The same game runs as a flat page for devices or people that the 3D room does not suit. See the [UI design](docs/03-design/ui-design.md).
+
 ## How it works
 
 One rule shapes the whole design: **the engine owns the facts, the model owns the words.**
@@ -42,7 +48,7 @@ Details: [high-level design](docs/03-design/high-level-design.md), [simulation e
 |---|---|
 | Language | TypeScript, Node 22 |
 | Server | Express 5, zod for every boundary |
-| Client | React with Vite |
+| Client | React with Vite. The play screen is a 3D room built with three.js through React Three Fiber, with a flat view as an equal alternative |
 | Model | Claude Fable 5.2 through the official `@anthropic-ai/sdk` |
 | Storage | In-memory sessions, exportable event logs, no database |
 | Tests | Vitest, Playwright, recorded model responses for repeatable runs |

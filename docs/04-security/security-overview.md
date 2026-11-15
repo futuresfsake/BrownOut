@@ -13,6 +13,13 @@ BrownOut has no accounts and stores no personal data, so the things worth protec
 | Visitor's browser | Model output or a loaded replay file injects markup or script | All model and replay text is rendered as text nodes. No `dangerouslySetInnerHTML`, no Markdown rendering. Content Security Policy with no inline script and no third-party origins. Replay files are validated against a strict schema with size and length limits before use. |
 | Server | Oversized or malformed requests, dependency vulnerabilities | Body size limits, zod validation on every route, Helmet defaults, `npm audit` in CI, Dependabot. |
 
+## The 3D room
+
+- The room loads nothing from other origins. Geometry is built in code, fonts are self-hosted and sounds are generated (NFR-15).
+- Text drawn in the scene comes from the same validated public state as the panels, and is drawn as glyphs, never interpreted.
+- Content Security Policy: the in-scene text helper may need a worker created from a blob URL. If it does, allow `worker-src 'self' blob:` and nothing wider. No `unsafe-eval`. Confirm what is needed in the M3 stage B spike and record the final policy here.
+- The debug description of the scene used by browser tests is compiled out of production builds.
+
 ## Prompt injection
 
 The action box accepts free text that is sent to a model, so injection attempts are expected.

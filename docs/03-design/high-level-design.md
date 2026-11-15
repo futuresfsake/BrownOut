@@ -5,7 +5,7 @@
 ```mermaid
 flowchart LR
   subgraph Browser
-    UI[React client<br/>board, log, inbox]
+    UI[React client<br/>3D room, panels, flat view]
   end
   subgraph Server[Node server]
     API[HTTP API<br/>Express + zod]
@@ -104,7 +104,12 @@ src/
   pipeline/      turn pipeline, guards, prompt builders
   model/         Claude client wrapper, cassette player and recorder, usage log
   server/        Express app, routes, session store, rate limits
-  client/        React app
+  client/
+    app/         routes, session hook, turn stream reader, idle clock
+    panels/      board, log, inbox, press, decision box, status strip (HTML)
+    flat/        the flat view: the panels laid out as one page
+    room/        the 3D view: scene, objects, stations, lights (loaded separately)
+    signals/     pure functions from public state to what the room shows
   shared/        zod schemas and types used by server and client
 tools/           scripts called by hooks and CI, scenario validator, terminal runner
 tests/           unit, integration, scripted playthroughs
@@ -113,6 +118,25 @@ cassettes/       recorded sessions
 testresults/dod/ evidence per milestone
 .githooks/       pre-commit, pre-push
 ```
+
+## Client structure
+
+```mermaid
+flowchart TD
+  PS[Public state<br/>from the turn stream] --> PAN[Panels<br/>HTML]
+  PS --> SIG[Signals<br/>pure functions]
+  SIG --> ROOM[3D room<br/>three.js]
+  PAN --> FLAT[Flat view]
+  PAN --> ROOM
+```
+
+- The panels are the interface. They are built once and used by both views.
+- Flat view arranges the panels on a page. The 3D view places them beside objects in the room.
+- `signals/` turns public state into a small description of the room: light level, which lamps are on, what the wall board shows, whether the television is on. It has no three.js in it and is unit tested.
+- The room renders that description. It keeps no game state, so switching views or losing the graphics context loses nothing.
+- The room is a separate chunk loaded during the briefing. Flat view never loads it.
+
+Details are in [ui-design.md](ui-design.md).
 
 ## Deployment
 

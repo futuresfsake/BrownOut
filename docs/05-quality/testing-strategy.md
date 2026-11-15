@@ -13,7 +13,10 @@ The design puts everything that must be exact into code that can be tested witho
 | Guard tests | Schema, coverage, numeric guard, leak check, citation check, with good and bad samples | None | Every commit |
 | Pipeline integration | Full turns through interpret, resolve and narrate using cassettes and failing stubs | None | Every commit |
 | API integration | Routes, validation, limits, 409 on overlapping turns, replay mode with no key | None | Every commit |
-| Browser tests | Start to debrief in replay mode, keyboard-only play, mobile layout, accessibility scan | None | Every push |
+| Signal tests | The pure mapping from public state to room description: light level, lamps, wall board, television | None | Every commit |
+| Browser tests, flat view | Start to debrief in replay mode, keyboard-only play, phone layout, accessibility scan | None | Every push |
+| Browser tests, 3D view | The room loads and draws something, each station opens its panel, switching views keeps state, WebGL off falls back to flat view, no frames drawn while idle | None | Every push |
+| 3D visual and performance check | Screenshots of every station at each light level, frame-rate readings on two reference devices | None | By hand at M3 stage B and M6 |
 | Interpreter accuracy | Labelled phrasings per scenario mapped to the expected intent | Live | On demand and before a release |
 | Narration checks | Scripted sessions against the live model, counting guard failures, fallbacks and declines | Live | On demand and before a release |
 
@@ -24,6 +27,16 @@ Nothing in CI calls the model. Live checks cost money and are run deliberately, 
 - A `ModelClient` interface has three implementations: live, cassette and stub.
 - The stub can be told to time out, decline, return invalid JSON, or return text that breaks a guard. Every failure path in high-level-design.md has a test that uses it.
 - Cassettes are reviewed like code. A change to a prompt that changes a cassette shows up in the diff.
+
+## Testing the 3D room
+
+The room is hard to test by looking at pixels and does not need to be, because of how it is built:
+
+- All behaviour lives in the panels and in the engine, which are tested without 3D.
+- What the room shows is decided by pure functions in `signals/`. Those are unit tested: given this state, the light level is 2, the phone lamp is on, the television is off.
+- The 3D browser tests check wiring, not appearance. They use the hidden HTML station controls to move around, and read a small debug description of the scene that the room exposes in test builds.
+- Headless browsers draw WebGL with a software renderer. That is enough to prove the scene loads and responds. It says nothing about speed, so frame rates are measured by hand on real devices.
+- Appearance is checked by a person against the screenshots, at M3 stage B and again at M6.
 
 ## Interpreter accuracy set
 

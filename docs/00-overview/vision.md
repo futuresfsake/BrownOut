@@ -47,6 +47,7 @@ Those two jobs, understanding free text and writing in a consistent voice over a
 
 - Not a real incident management tool. It pages no one and connects to no real system.
 - Not multiplayer. One player per session in version 1.
+- Not a 3D exploration game. The room is somewhere to sit and work, with fixed views. There is nothing to walk around and find.
 - Not a certification or an assessment anyone should be hired or fired on.
 - No accounts, profiles or leaderboards in version 1.
 - No scenario generated entirely by the model in version 1. Scenarios are authored. See O-05.

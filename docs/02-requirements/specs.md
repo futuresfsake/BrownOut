@@ -63,6 +63,18 @@ Each requirement is testable. The "Check" column says how.
 | FR-28 | With no API key configured, the server starts in replay mode and says so in the interface. | Integration test |
 | FR-29 | A finished session can be exported as JSON and loaded again. A loaded file is validated before anything is rendered from it. | Unit and browser test |
 
+### Views
+
+| ID | Requirement | Check |
+|---|---|---|
+| FR-30 | The play screen has a 3D view and a flat view. Every action, panel, state and shortcut is available in both. | Browser tests in flat view, checklist in 3D |
+| FR-31 | The player can switch between the views at any time without losing session state, scroll position in the log, or text typed in the decision box. | Browser test |
+| FR-32 | If WebGL 2 is unavailable or the graphics context is lost and not restored, the game continues in flat view and says why. | Browser test with WebGL disabled |
+| FR-33 | The decision box and the status strip are visible and usable at every camera station. | Browser test |
+| FR-34 | Every station can be reached by keyboard and by an HTML control, not only by pointing at the scene. | Browser test |
+| FR-35 | All text of more than a few words is HTML. The scene draws only the clock, the wall board figures and the television headline. | Code review |
+| FR-36 | Room signals (lamps, lights, screens) are derived from the same public state as the panels. The room holds no game state of its own. | Unit test of the state-to-scene mapping |
+
 ## Non-functional
 
 | ID | Requirement | Check |
@@ -77,3 +89,8 @@ Each requirement is testable. The "Check" column says how.
 | NFR-08 | No high or critical vulnerability in production dependencies at release. | `npm audit --omit=dev` |
 | NFR-09 | Engine line coverage at or above 90 percent. Overall at or above 80 percent. | Coverage report |
 | NFR-10 | The server refuses more than 10 turn requests per minute per session and more than 5 new sessions per hour per address. | Integration test |
+| NFR-11 | The 3D view meets the performance targets in ui-design.md on the two reference devices. These are targets to confirm or revise with the M3 stage B spike. | Readings saved as evidence |
+| NFR-12 | The 3D code is a separate chunk. The start screen is interactive before it loads, and flat view never downloads it. | Build report, network trace |
+| NFR-13 | When nothing in the scene is changing, no frames are drawn. | Frame counter in a browser test |
+| NFR-14 | Light changes never flash more than twice in one second. With reduced motion set, camera moves are cuts and light changes are instant. | Unit test of the transition timing, manual check |
+| NFR-15 | No 3D asset, font or sound is fetched from a third-party origin. | Network trace in a browser test |
