@@ -9,8 +9,14 @@ export default defineConfig({
     testTimeout: 30_000,
     coverage: {
       provider: "v8",
-      reporter: ["text-summary", "json-summary"],
+      reporter: ["text", "json-summary"],
       include: ["src/**/*.ts"],
+      // Thin wrappers around the terminal: the logic they call is tested.
+      exclude: ["src/cli/play.ts", "src/tools/validate.ts"],
+      thresholds: {
+        "src/engine/**": { lines: 90 },
+        lines: 80,
+      },
     },
   },
 });

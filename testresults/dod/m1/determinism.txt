@@ -1,0 +1,10 @@
+﻿Two separate processes, scenario dial-tone, same seed and same scripted steps:
+ideal  seed 3, run 1: db0b04f39a46bb04d27366622abbed0d926bad5251d7cf3b16d20c16eef0a747
+ideal  seed 3, run 2: db0b04f39a46bb04d27366622abbed0d926bad5251d7cf3b16d20c16eef0a747
+identical: True
+poor   seed 3, run 1: ce3a2b3c339f4f25e15fc5d90afbe06d981ec45858203c4b1c04d29887e40fc4
+poor   seed 3, run 2: ce3a2b3c339f4f25e15fc5d90afbe06d981ec45858203c4b1c04d29887e40fc4
+identical: True
+ideal  seed 4:        f7b713453ccced3d16630574f2256c0cf91c92b31eebecbd2dab77b64afc46be   (a different seed shifts some beat timings)
+differs from seed 3: True
+

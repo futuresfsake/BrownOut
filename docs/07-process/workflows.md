@@ -41,7 +41,7 @@ git config core.hooksPath .githooks
 | Hook | Runs |
 |---|---|
 | `pre-commit` | gitleaks on staged changes, tracked-file check (no env or key files, no local paths, no tool files), ESLint, type-check, tests |
-| `pre-push` | gitleaks on the whole history, tracked-file check, commit-message check (no co-author trailers or tool banners), semgrep, `npm audit --omit=dev`, ESLint, type-check, tests, scenario validation once it exists (M1) |
+| `pre-push` | gitleaks on the whole history, tracked-file check, commit-message check (no co-author trailers or tool banners), semgrep, `npm audit --omit=dev`, ESLint, type-check, tests, scenario validation |
 
 The hooks call scripts in `tools/` so that CI runs exactly the same commands. A check that cannot run because a tool is missing fails with a message naming the tool. It does not pass silently.
 

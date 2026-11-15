@@ -1,0 +1,965 @@
+// Scenario 1: Dial Tone. A carrier outage. See docs/03-design/scenarios.md for the full design.
+// All names are fictional.
+import type { Scenario } from "../../engine/schema.js";
+
+export const dialTone: Scenario = {
+  id: "dial-tone",
+  title: "Dial Tone",
+  version: 1,
+  briefing: {
+    role: "On-call engineering lead at Halden Mobile",
+    situation:
+      "You are the on-call engineering lead at Halden Mobile. Your pager went off a minute ago: customers in two regions are failing to connect, and the dashboard shows errors on subscriber authentication and on billing. Mika Tan is the engineer on shift and will carry out what you ask.",
+    canDo:
+      "Type what you do, or what you tell someone, in your own words. Anyone in your seat could look things up, give orders, or talk to the people who are about to start messaging you.",
+  },
+  startClock: "02:14",
+  lengthMinutes: 90,
+
+  stakeholders: [
+    {
+      id: "engineer",
+      name: "Mika Tan",
+      role: "Site reliability engineer on shift",
+      wants: "Clear orders",
+      voice: "Factual. Reports what the screen says. Asks when an order is unclear.",
+      patienceMinutes: 0,
+      startTrust: 70,
+      channel: "chat",
+      audience: "internal",
+    },
+    {
+      id: "cto",
+      name: "Ramon Villareal",
+      role: "Chief technology officer",
+      wants: "An ETA, then to be kept informed",
+      voice: "Two sentences at most. Wants a time. Stops being polite when an ETA is missed.",
+      patienceMinutes: 5,
+      startTrust: 60,
+      channel: "chat",
+      audience: "internal",
+    },
+    {
+      id: "support",
+      name: "Joy Antolin",
+      role: "Head of customer support",
+      wants: "One true line her agents can say",
+      voice: "Practical and tired. Gives numbers.",
+      patienceMinutes: 8,
+      startTrust: 60,
+      channel: "chat",
+      audience: "internal",
+    },
+    {
+      id: "counsel",
+      name: "Priya Nair",
+      role: "General counsel",
+      wants: "To know whether data is involved, and on what basis",
+      voice: "Precise closed questions. Writes down the answers.",
+      patienceMinutes: 10,
+      startTrust: 60,
+      channel: "email",
+      audience: "sensitive",
+    },
+    {
+      id: "comms",
+      name: "Daniel Osei",
+      role: "Communications lead",
+      wants: "Approved wording and an accurate status page",
+      voice: "Careful. Wants wording approved before it goes out.",
+      patienceMinutes: 8,
+      startTrust: 60,
+      channel: "chat",
+      audience: "internal",
+    },
+    {
+      id: "journalist",
+      name: "Carla Whitlock",
+      role: "Reporter, The Daily Circuit",
+      wants: "A comment before her deadline",
+      voice: "Courteous, on a deadline, quotes exactly.",
+      patienceMinutes: 19,
+      startTrust: 50,
+      channel: "press",
+      audience: "press",
+    },
+    {
+      id: "customer",
+      name: "Tomas Ferrer",
+      role: "IT manager, Calder Valley Hospital Group",
+      wants: "To know what to tell his wards",
+      voice: "Worried and specific about what is failing.",
+      patienceMinutes: 10,
+      startTrust: 60,
+      channel: "email",
+      audience: "sensitive",
+    },
+    {
+      id: "regulator",
+      name: "Duty officer",
+      role: "Telecommunications Authority duty line",
+      wants: "A notification, on time",
+      voice: "Formal. Only calls when something is missing.",
+      patienceMinutes: 15,
+      startTrust: 60,
+      channel: "chat",
+      audience: "sensitive",
+    },
+  ],
+
+  systems: [
+    { id: "auth-core", label: "Subscriber authentication (auth-core)", start: "degraded" },
+    { id: "billing-api", label: "Billing API", start: "degraded" },
+    { id: "packet-gateway", label: "Packet gateway", start: "ok" },
+    {
+      id: "status-page",
+      label: "Public status page",
+      start: "ok",
+      labels: { ok: "Shows all systems normal", degraded: "Incident posted" },
+    },
+  ],
+
+  metrics: [
+    {
+      id: "customersAffected",
+      label: "Customers affected",
+      visibleWhen: { type: "clue", id: "two-regions" },
+    },
+    {
+      id: "tickets",
+      label: "Support tickets open",
+      visibleWhen: { type: "beatFired", id: "support-tickets" },
+      derive: { kind: "delayedDivide", from: "customersAffected", delayMinutes: 5, divisor: 150 },
+    },
+    {
+      id: "attachSuccess",
+      label: "Attach success rate (percent)",
+      visibleWhen: { type: "clue", id: "auth-errors-high" },
+      derive: { kind: "saturating", from: "customersAffected", k: 150000 },
+    },
+  ],
+  driverMetric: "customersAffected",
+  startMode: "fault",
+  modes: {
+    fault: [
+      {
+        kind: "curve",
+        points: [
+          [0, 60000],
+          [30, 240000],
+          [60, 420000],
+          [90, 520000],
+        ],
+      },
+    ],
+    held: [{ kind: "hold" }],
+    recovered: [{ kind: "ramp", over: 3, to: 0 }],
+    drained: [{ kind: "ramp", over: 8, toFactor: 0.15 }, { kind: "hold" }],
+    spike: [
+      { kind: "ramp", over: 1, to: 780000 },
+      { kind: "hold", for: 9 },
+      { kind: "follow", mode: "fault", multiplier: 1.15 },
+    ],
+    throttled: [{ kind: "follow", mode: "fault", multiplier: 1.1 }],
+  },
+  severeAbove: 400000,
+
+  clues: [
+    {
+      id: "two-regions",
+      kind: "true",
+      fact: "Failures are in the North and Coastal regions only.",
+      leakTerms: ["North and Coastal", "two regions only"],
+    },
+    {
+      id: "auth-errors-high",
+      kind: "true",
+      fact: "auth-core is rejecting about a third of sign-in attempts.",
+      leakTerms: ["rejecting about a third"],
+    },
+    {
+      id: "billing-deploy-benign",
+      kind: "redHerring",
+      fact: "The billing deploy at 23:40 changed invoice rendering only.",
+      leakTerms: ["invoice rendering"],
+    },
+    {
+      id: "billing-errors-are-timeouts",
+      kind: "symptom",
+      fact: "Billing errors are session-validation timeouts, not billing faults.",
+      leakTerms: ["session-validation timeouts"],
+    },
+    {
+      id: "retry-storm",
+      kind: "redHerring",
+      fact: "The traffic spike is subscriber devices retrying. It is not an attack.",
+      leakTerms: ["devices retrying", "not an attack"],
+    },
+    {
+      id: "gateway-healthy",
+      kind: "symptom",
+      fact: "The packet gateway is healthy. Devices that are attached work normally.",
+      leakTerms: ["gateway is healthy"],
+    },
+    {
+      id: "tls-failures-six-nodes",
+      kind: "true",
+      fact: "TLS handshakes have been failing on 6 of 12 auth-core nodes since 01:52.",
+      leakTerms: ["handshakes have been failing"],
+    },
+    {
+      id: "cert-rotation-0152",
+      kind: "true",
+      fact: "A scheduled certificate rotation ran on auth-core at 01:52.",
+      leakTerms: ["certificate rotation"],
+    },
+    {
+      id: "missing-intermediate",
+      kind: "true",
+      fact: "The 6 failing nodes loaded a certificate bundle with no intermediate certificate.",
+      leakTerms: ["no intermediate", "missing intermediate"],
+    },
+    {
+      id: "no-unusual-access",
+      kind: "true",
+      fact: "Access logs show no unusual reads of subscriber data.",
+      leakTerms: ["no unusual reads"],
+    },
+    {
+      id: "emergency-degraded",
+      kind: "true",
+      fact: "Affected devices cannot place emergency calls reliably.",
+      leakTerms: ["emergency calls reliably"],
+    },
+    {
+      id: "recovered",
+      kind: "true",
+      fact: "Attach success is back to baseline.",
+      leakTerms: ["back to baseline"],
+    },
+  ],
+
+  investigations: [
+    {
+      id: "overview",
+      label: "Look at the overall picture",
+      durationMinutes: 2,
+      examples: [
+        "What does the dashboard show?",
+        "Give me an overview of what's failing",
+        "Which regions are affected?",
+        "Quick look at the whole situation",
+        "What are we seeing right now?",
+      ],
+      reveals: ["two-regions", "auth-errors-high"],
+      resultPurpose: "Report which regions fail and that authentication is rejecting sign-ins",
+      resultText:
+        "Mika: Failures are in the North and Coastal regions only. auth-core is rejecting about a third of sign-in attempts. Everything else looks normal at this level.",
+    },
+    {
+      id: "billing-deploy",
+      label: "Check whether last night's billing deploy is involved",
+      durationMinutes: 5,
+      examples: [
+        "Check whether last night's deploy touched the billing service",
+        "Did the billing release break something?",
+        "Look at the 23:40 billing deploy",
+        "Is billing the cause?",
+        "What changed in billing last night?",
+      ],
+      reveals: ["billing-deploy-benign", "billing-errors-are-timeouts"],
+      resultPurpose: "Clear the billing deploy and explain the billing errors",
+      resultText:
+        "Mika: The billing deploy at 23:40 changed invoice rendering only. The billing errors are session-validation timeouts, not billing faults. Billing looks like a symptom.",
+    },
+    {
+      id: "traffic-spike",
+      label: "Look at the traffic spike",
+      durationMinutes: 5,
+      examples: [
+        "Is this a DDoS?",
+        "Look at the traffic pattern",
+        "Are we under attack?",
+        "Where is the extra traffic coming from?",
+        "Check the spike in requests",
+      ],
+      reveals: ["retry-storm"],
+      resultPurpose: "Show the spike is our own devices retrying",
+      resultText: "Mika: The traffic spike is subscriber devices retrying. It is not an attack.",
+    },
+    {
+      id: "network-core",
+      label: "Check the packet gateway and core network",
+      durationMinutes: 5,
+      examples: [
+        "Is the core network healthy?",
+        "Check the packet gateway",
+        "Look at the data path",
+        "Is it a network problem?",
+        "Check whether attached devices work",
+      ],
+      reveals: ["gateway-healthy"],
+      resultPurpose: "Show the data path is fine",
+      resultText:
+        "Mika: The packet gateway is healthy. Devices that are attached work normally. The problem is getting devices attached.",
+    },
+    {
+      id: "auth-logs",
+      label: "Pull the auth-core logs",
+      durationMinutes: 5,
+      examples: [
+        "Pull the auth-core logs for the last 30 minutes",
+        "What do the auth logs say?",
+        "Look at authentication errors",
+        "Search the auth-core logs",
+        "Grab the logs from the auth cluster",
+      ],
+      reveals: ["tls-failures-six-nodes"],
+      resultPurpose: "Report the TLS failures on half the nodes",
+      resultText: "Mika: TLS handshakes have been failing on 6 of 12 auth-core nodes since 01:52.",
+    },
+    {
+      id: "auth-changes",
+      label: "Find out what changed on auth-core",
+      durationMinutes: 2,
+      examples: [
+        "What changed on auth-core around 01:52?",
+        "What changed recently?",
+        "Any deploys or config changes on the auth cluster?",
+        "What was the last change before this started?",
+        "Check the change log for authentication",
+      ],
+      reveals: ["cert-rotation-0152", "missing-intermediate"],
+      resultPurpose: "Report the certificate rotation and the incomplete bundle",
+      resultText:
+        "Mika: A scheduled certificate rotation ran on auth-core at 01:52. The 6 failing nodes loaded a certificate bundle with no intermediate certificate.",
+    },
+    {
+      id: "access-logs",
+      label: "Review access logs for unusual reads of subscriber data",
+      durationMinutes: 10,
+      examples: [
+        "Check the access logs for data exposure",
+        "Was any customer data accessed?",
+        "Look for unusual database reads",
+        "Review who touched subscriber data",
+        "Audit data access over the last few hours",
+      ],
+      reveals: ["no-unusual-access"],
+      resultPurpose: "Report that no unusual data access was found",
+      resultText: "Mika: Access logs show no unusual reads of subscriber data.",
+    },
+    {
+      id: "emergency-calls",
+      label: "Check whether emergency calling is affected",
+      durationMinutes: 2,
+      requires: { type: "minuteAtLeast", value: 10 },
+      examples: [
+        "Are emergency calls working?",
+        "Can affected devices dial 911?",
+        "Test emergency calling",
+        "Check emergency call routing",
+        "Is anyone unable to reach emergency services?",
+      ],
+      reveals: ["emergency-degraded"],
+      resultPurpose: "Report that emergency calling is unreliable for affected devices",
+      resultText: "Mika: Affected devices cannot place emergency calls reliably.",
+    },
+    {
+      id: "verify-recovery",
+      label: "Confirm that attach success is back to normal",
+      durationMinutes: 2,
+      requires: {
+        type: "any",
+        of: [
+          { type: "mitigation", id: "rollback-bundle" },
+          { type: "mitigation", id: "drain-bad-nodes" },
+        ],
+      },
+      revealsWhen: { type: "metricBelow", id: "customersAffected", value: 1000 },
+      examples: [
+        "Is attach success back to normal?",
+        "Confirm we've recovered",
+        "Check that devices are connecting again",
+        "Verify the fix worked",
+        "Are the numbers back to baseline?",
+      ],
+      reveals: ["recovered"],
+      resultPurpose: "Confirm recovery",
+      resultText: "Mika: Attach success is back to baseline.",
+      notYetText:
+        "Mika: Not yet. Attach success is still below baseline and some devices are still failing.",
+    },
+  ],
+
+  mitigations: [
+    {
+      id: "rollback-bundle",
+      label: "Roll back the certificate bundle on the 6 bad nodes, one at a time",
+      durationMinutes: 10,
+      kind: "fix",
+      examples: [
+        "Push the previous bundle to the six bad nodes, rolling, one at a time",
+        "Roll back the certificate change",
+        "Revert the cert bundle on the failing nodes",
+        "Put the old certificates back",
+        "Redeploy the last good bundle to auth-core",
+      ],
+      onStart: { mode: "held" },
+      onComplete: { mode: "recovered", systems: { "auth-core": "ok", "billing-api": "ok" } },
+      resultPurpose:
+        "Report that all nodes are on the previous bundle and attach success is recovering",
+      resultText: "Mika: All 6 nodes are on the previous bundle. Attach success is recovering.",
+      facts: ["All 6 nodes are on the previous bundle."],
+    },
+    {
+      id: "drain-bad-nodes",
+      label: "Take the bad nodes out of the load balancer",
+      durationMinutes: 5,
+      kind: "partial",
+      examples: [
+        "Drain the six failing nodes",
+        "Take the bad nodes out of rotation",
+        "Remove the broken nodes from the load balancer",
+        "Stop sending traffic to the failing nodes",
+        "Pull the failing auth nodes out of service",
+      ],
+      onComplete: { mode: "drained", systems: {} },
+      resultPurpose: "Report that the bad nodes are out and capacity is halved",
+      resultText:
+        "Mika: The bad nodes are out of rotation. Most devices connect now, but auth-core is at half capacity and still degraded.",
+    },
+    {
+      id: "restart-all-auth",
+      label: "Restart every auth-core node",
+      durationMinutes: 5,
+      kind: "harmful",
+      examples: [
+        "Restart all the auth nodes",
+        "Bounce the whole auth cluster",
+        "Reboot auth-core",
+        "Restart everything on authentication",
+        "Just restart the auth servers",
+      ],
+      onComplete: { mode: "spike", systems: {} },
+      resultPurpose: "Report that devices are re-signing in against the broken nodes",
+      resultText:
+        "Mika: All nodes restarted. Every connected device is signing in again, and half of them are hitting the broken nodes.",
+    },
+    {
+      id: "rollback-billing",
+      label: "Roll back the billing deploy",
+      durationMinutes: 10,
+      kind: "noEffect",
+      examples: [
+        "Roll back last night's billing release",
+        "Revert the billing deploy",
+        "Undo the 23:40 billing change",
+        "Take billing back to the previous version",
+        "Rollback billing",
+      ],
+      onComplete: { systems: {} },
+      resultPurpose: "Report that nothing improved",
+      resultText:
+        "Mika: Billing is rolled back. Invoices were unavailable for the duration. Nothing has improved.",
+    },
+    {
+      id: "block-retry-traffic",
+      label: "Rate-limit the retrying traffic",
+      durationMinutes: 5,
+      kind: "harmful",
+      examples: [
+        "Block the retry traffic",
+        "Rate limit the flood of requests",
+        "Throttle the incoming requests",
+        "Cut off the repeated sign-in attempts",
+        "Drop the retry storm at the edge",
+      ],
+      onComplete: { mode: "throttled", systems: {} },
+      resultPurpose: "Report that real subscribers are now being limited",
+      resultText:
+        "Mika: Rate limit is on. Real subscribers are being limited along with the retries, and more are failing.",
+    },
+  ],
+
+  directives: [
+    {
+      id: "update-status-page",
+      label: "Update the public status page",
+      toAny: ["comms"],
+      examples: [
+        "Tell comms to update the status page",
+        "Post an incident on the status page",
+        "Get the status page changed",
+        "Daniel, the status page needs to say we have an outage",
+        "Publish a status page notice",
+      ],
+      effects: { systems: { "status-page": "degraded" } },
+    },
+    {
+      id: "notify-regulator",
+      label: "Notify the regulator duty line",
+      toAny: ["comms", "regulator"],
+      examples: [
+        "Tell comms to notify the regulator duty line",
+        "Call the telecommunications authority",
+        "Report the emergency-calling impact to the regulator",
+        "Daniel, get the regulator on the phone",
+        "File the regulator notification",
+      ],
+    },
+    {
+      id: "all-clear",
+      label: "Send the all-clear",
+      examples: [
+        "Tell everyone we're recovered",
+        "Send the all-clear",
+        "Let them know it's resolved",
+        "Incident is over, tell the team",
+        "Announce that service is restored",
+      ],
+    },
+  ],
+
+  claimTopics: [
+    {
+      id: "cause-is-cert",
+      statement: "The cause is the certificate bundle on auth-core",
+      statementTrue: true,
+      supportsAsserts: ["missing-intermediate"],
+      supportsDenies: [],
+    },
+    {
+      id: "billing-is-cause",
+      statement: "The billing deploy is the cause",
+      statementTrue: false,
+      supportsAsserts: [],
+      supportsDenies: ["billing-deploy-benign", "billing-errors-are-timeouts"],
+      surfacesWhen: { type: "clue", id: "billing-deploy-benign" },
+    },
+    {
+      id: "under-attack",
+      statement: "The network is under attack",
+      statementTrue: false,
+      supportsAsserts: [],
+      supportsDenies: ["retry-storm"],
+      surfacesWhen: { type: "clue", id: "retry-storm" },
+    },
+    {
+      id: "data-exposed",
+      statement: "Customer data has been exposed",
+      statementTrue: false,
+      supportsAsserts: [],
+      supportsDenies: ["no-unusual-access"],
+    },
+    {
+      id: "emergency-affected",
+      statement: "Emergency calling is affected",
+      statementTrue: true,
+      trueFromMinute: 10,
+      supportsAsserts: ["emergency-degraded"],
+      supportsDenies: [],
+      surfacesWhen: { type: "minuteAtLeast", value: 31 },
+    },
+  ],
+
+  obligations: [
+    {
+      id: "status-page",
+      label: "Status page updated",
+      trigger: { type: "minuteAtLeast", value: 0 },
+      withinMinutes: 25,
+      satisfiedBy: { directive: "update-status-page", toAny: ["comms"] },
+    },
+    {
+      id: "notify-regulator",
+      label: "Regulator notified",
+      trigger: {
+        type: "any",
+        of: [
+          { type: "clue", id: "emergency-degraded" },
+          { type: "beatFired", id: "hospital" },
+        ],
+      },
+      withinMinutes: 30,
+      satisfiedBy: { directive: "notify-regulator", toAny: ["comms", "regulator"] },
+    },
+    {
+      id: "all-clear",
+      label: "All-clear sent",
+      trigger: { type: "clue", id: "recovered" },
+      withinMinutes: 10,
+      satisfiedBy: { directive: "all-clear", toAll: ["cto", "support", "comms"] },
+    },
+  ],
+
+  beats: [
+    {
+      id: "alert",
+      from: "system",
+      channel: "log",
+      when: { atMinute: 0 },
+      purpose: "Open the incident with the alert",
+      facts: [
+        "Subscriber attach failures are rising in two regions.",
+        "Billing errors are also elevated.",
+      ],
+      fallbackText:
+        "ALERT {clock}: subscriber attach failures rising in two regions. Billing errors are also elevated.",
+    },
+    {
+      id: "cto-eta",
+      from: "cto",
+      channel: "chat",
+      when: { atMinute: 3 },
+      purpose: "Demand an ETA within 10 minutes",
+      facts: ["The CTO wants an ETA within 10 minutes."],
+      fallbackText: "Ramon: What's the ETA? I need something I can tell the board in 10 minutes.",
+    },
+    {
+      id: "support-tickets",
+      from: "support",
+      channel: "chat",
+      when: { atMinute: 6, jitter: 2 },
+      purpose: "Report the ticket count and ask what to tell customers",
+      facts: [
+        "About {tickets} support tickets are open, all about no signal or failed connections.",
+      ],
+      fallbackText:
+        "Joy: About {tickets} tickets open, all 'no signal' or 'can't connect'. What do I tell customers?",
+    },
+    {
+      id: "journalist-comment",
+      from: "journalist",
+      channel: "press",
+      when: { atMinute: 12, jitter: 2 },
+      purpose: "Ask for comment before a deadline",
+      facts: [
+        "Customers are posting that Halden Mobile is down.",
+        "The deadline for comment is 02:45.",
+      ],
+      fallbackText:
+        "Carla Whitlock, The Daily Circuit: Customers are posting that Halden Mobile is down. Can you comment before 02:45?",
+    },
+    {
+      id: "cto-ten-minutes",
+      from: "cto",
+      channel: "chat",
+      when: { atMinute: 13 },
+      unless: { type: "not", of: { type: "unanswered", who: "cto" } },
+      purpose: "Say the ten minutes are up",
+      facts: ["Ten minutes have passed since the CTO asked for an ETA."],
+      fallbackText: "Ramon: Ten minutes are up. Where are we?",
+    },
+    {
+      id: "counsel-exposure",
+      from: "counsel",
+      channel: "email",
+      when: { atMinute: 15, jitter: 2 },
+      purpose: "Ask whether customer data could be exposed, and on what basis",
+      facts: ["Counsel needs to know whether customer data could have been exposed."],
+      fallbackText:
+        "Priya Nair: Could any customer data have been exposed? I need a yes or no, and what it is based on.",
+    },
+    {
+      id: "comms-status",
+      from: "comms",
+      channel: "chat",
+      when: { atMinute: 20 },
+      unless: { type: "directiveSent", id: "update-status-page" },
+      purpose: "Point out that the status page still says all normal",
+      facts: ["The public status page still shows all systems normal."],
+      fallbackText:
+        "Daniel: The status page still says all systems normal. I need wording approved. Can I post?",
+    },
+    {
+      id: "hospital",
+      from: "customer",
+      channel: "email",
+      when: { atMinute: 25 },
+      unless: { type: "mitigation", id: "rollback-bundle" },
+      purpose: "A hospital group reports its emergency routing is failing",
+      facts: ["A hospital group reports its emergency call routing is failing."],
+      fallbackText:
+        "Tomas Ferrer, Calder Valley Hospital Group: Our emergency call routing is failing. Is this your outage? What do we tell our wards?",
+    },
+    {
+      id: "press-publish-fair",
+      from: "journalist",
+      channel: "press",
+      when: { atMinute: 31 },
+      unless: {
+        type: "claim",
+        topic: "emergency-affected",
+        stance: "denies",
+        truth: "false",
+        to: "journalist",
+      },
+      purpose: "Publish a fair story about the outage",
+      facts: [
+        "Customers in two regions lost service overnight.",
+        "The company says it is working on a fix.",
+      ],
+      fallbackText:
+        "The Daily Circuit: Halden Mobile outage hits two regions. Customers lost service overnight; the company says it is working on a fix.",
+    },
+    {
+      id: "press-publish-harsh",
+      from: "journalist",
+      channel: "press",
+      when: {
+        condition: {
+          type: "all",
+          of: [
+            { type: "minuteAtLeast", value: 31 },
+            {
+              type: "claim",
+              topic: "emergency-affected",
+              stance: "denies",
+              truth: "false",
+              to: "journalist",
+            },
+          ],
+        },
+      },
+      purpose: "Publish a story that sets the company's denial against the hospital's account",
+      facts: [
+        "The company said emergency calls were unaffected.",
+        "A hospital group says its emergency routing failed.",
+      ],
+      quotesClaim: "emergency-affected",
+      fallbackText:
+        'The Daily Circuit: Halden Mobile said emergency calls were unaffected: "{quote}". A hospital group says its emergency routing failed.',
+    },
+    {
+      id: "support-update",
+      from: "support",
+      channel: "chat",
+      when: { atMinute: 40 },
+      unless: { type: "clue", id: "recovered" },
+      purpose: "Report the ticket count and ask for an updated line",
+      facts: ["{tickets} support tickets are open."],
+      fallbackText: "Joy: Tickets are at {tickets}. My agents need an updated line.",
+    },
+    {
+      id: "cto-board",
+      from: "cto",
+      channel: "chat",
+      when: { atMinute: 45 },
+      unless: { type: "clue", id: "recovered" },
+      purpose: "A board member is awake and asking",
+      facts: ["A board member is asking for an update."],
+      fallbackText: "Ramon: A board member is awake and asking. What can I tell them?",
+    },
+    {
+      id: "regulator-calls",
+      from: "regulator",
+      channel: "chat",
+      when: { condition: { type: "obligation", id: "notify-regulator", state: "missed" } },
+      purpose: "The regulator calls because no notification arrived",
+      facts: [
+        "The regulator has heard emergency calling is affected and has received no notification.",
+      ],
+      fallbackText:
+        "Duty officer, Telecommunications Authority: We hear emergency calling is affected on your network and we have no notification from you. Call this line now.",
+    },
+    {
+      id: "support-restart",
+      from: "support",
+      channel: "chat",
+      when: { condition: { type: "mitigation", id: "restart-all-auth" }, delayMinutes: 1 },
+      purpose: "Tickets jumped after the restart",
+      facts: ["Tickets just jumped to {tickets}."],
+      fallbackText: "Joy: Tickets just jumped to {tickets}. What did you change?",
+    },
+    {
+      id: "cto-restart",
+      from: "cto",
+      channel: "chat",
+      when: { condition: { type: "mitigation", id: "restart-all-auth" }, delayMinutes: 3 },
+      purpose: "Ask what the player did, after customers affected rose",
+      facts: ["Customers affected rose to {customersAffected}."],
+      fallbackText:
+        "Ramon: Customers affected just went up to {customersAffected}. What did you do?",
+    },
+    {
+      id: "counsel-attack",
+      from: "counsel",
+      channel: "email",
+      when: {
+        condition: {
+          type: "all",
+          of: [
+            { type: "claim", topic: "under-attack", stance: "asserts" },
+            { type: "clue", id: "retry-storm" },
+          ],
+        },
+      },
+      purpose: "Confront the player with an earlier claim that this was an attack",
+      facts: ["The traffic spike is subscriber devices retrying, not an attack."],
+      quotesClaim: "under-attack",
+      fallbackText:
+        'Priya Nair: You told us this was an attack: "{quote}". The spike is our own devices retrying. Was that statement correct? I need it in writing.',
+    },
+    {
+      id: "counsel-basis",
+      from: "counsel",
+      channel: "email",
+      when: {
+        condition: {
+          type: "claim",
+          topic: "data-exposed",
+          stance: "denies",
+          supported: false,
+          to: "counsel",
+        },
+        delayMinutes: 1,
+      },
+      purpose: "Ask on what basis the player said no data was exposed",
+      facts: ["The player said no data was exposed before checking access logs."],
+      quotesClaim: "data-exposed",
+      fallbackText:
+        'Priya Nair: You said: "{quote}". On what basis? I need to know what you checked.',
+    },
+    {
+      id: "cto-missed",
+      from: "cto",
+      channel: "chat",
+      when: { condition: { type: "commitmentBroken", to: "cto" } },
+      purpose: "State the missed time exactly",
+      facts: ["The CTO was promised an update by {brokenDue} and did not get one."],
+      fallbackText: "Ramon: You said I would hear from you by {brokenDue}. I did not.",
+    },
+    {
+      id: "support-allclear",
+      from: "support",
+      channel: "chat",
+      when: { condition: { type: "clue", id: "recovered" } },
+      purpose: "Ask for the all-clear wording",
+      facts: ["Recovery is confirmed."],
+      fallbackText:
+        "Joy: Recovery looks good from our side. What wording do my agents use for the all-clear?",
+    },
+    {
+      id: "comms-allclear",
+      from: "comms",
+      channel: "chat",
+      when: { condition: { type: "clue", id: "recovered" } },
+      purpose: "Ask for the all-clear wording",
+      facts: ["Recovery is confirmed."],
+      fallbackText: "Daniel: I need the all-clear wording to update the status page.",
+    },
+  ],
+
+  endings: {
+    ctoTrustFloor: 15,
+    resolvedWhen: {
+      type: "all",
+      of: [
+        { type: "mitigation", id: "rollback-bundle" },
+        { type: "clue", id: "recovered" },
+        {
+          type: "any",
+          of: [
+            { type: "obligation", id: "all-clear", state: "met" },
+            { type: "obligation", id: "all-clear", state: "late" },
+          ],
+        },
+      ],
+    },
+  },
+  scoring: { rootCauseClue: "missing-intermediate", causeTargetMinute: 6 },
+
+  idealPath: [
+    { atMinute: 0, intent: { kind: "investigate", id: "overview" } },
+    {
+      atMinute: 3,
+      intent: {
+        kind: "communicate",
+        to: ["cto"],
+        text: "No ETA yet. I will update you in ten minutes.",
+        promises: [{ to: "cto", what: "an update", dueInMinutes: 10 }],
+      },
+    },
+    { atMinute: 4, intent: { kind: "investigate", id: "auth-changes" } },
+    { atMinute: 6, intent: { kind: "mitigate", id: "rollback-bundle" } },
+    {
+      atMinute: 7,
+      intent: {
+        kind: "communicate",
+        to: ["comms"],
+        text: "Please update the status page: we have an outage.",
+        directives: ["update-status-page"],
+      },
+    },
+    {
+      atMinute: 8,
+      intent: {
+        kind: "communicate",
+        to: ["support"],
+        text: "Outage in two regions, we know the cause, fix under way. Tell customers we are working on it.",
+      },
+    },
+    {
+      atMinute: 9,
+      intent: {
+        kind: "communicate",
+        to: ["cto"],
+        text: "A certificate bundle on auth-core is the cause. Rolling it back now.",
+        claims: [
+          {
+            topic: "cause-is-cert",
+            stance: "asserts",
+            text: "A certificate bundle on auth-core is the cause",
+          },
+        ],
+      },
+    },
+    {
+      atMinute: 15,
+      intent: {
+        kind: "communicate",
+        to: ["journalist"],
+        text: "We are aware of an outage in two regions. We have identified the cause and a fix is under way.",
+        claims: [
+          { topic: "cause-is-cert", stance: "asserts", text: "We have identified the cause" },
+        ],
+      },
+    },
+    { atMinute: 17, intent: { kind: "investigate", id: "emergency-calls" } },
+    {
+      atMinute: 18,
+      intent: {
+        kind: "communicate",
+        to: ["counsel"],
+        text: "This is an availability incident. I see no sign of data exposure so far. I will confirm after the access logs are reviewed.",
+        claims: [
+          {
+            topic: "data-exposed",
+            stance: "uncertain",
+            text: "No sign of exposure so far, to be confirmed",
+          },
+        ],
+      },
+    },
+    {
+      atMinute: 19,
+      intent: {
+        kind: "communicate",
+        to: ["comms"],
+        text: "Emergency calling was affected. Please notify the regulator duty line.",
+        directives: ["notify-regulator"],
+      },
+    },
+    { atMinute: 20, intent: { kind: "investigate", id: "verify-recovery" } },
+    {
+      atMinute: 22,
+      intent: {
+        kind: "communicate",
+        to: ["cto", "support", "comms"],
+        text: "Service is restored. All clear.",
+        directives: ["all-clear"],
+      },
+    },
+  ],
+};

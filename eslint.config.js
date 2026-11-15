@@ -45,4 +45,12 @@ export default tseslint.config(
       "security/detect-non-literal-regexp": "off",
     },
   },
+  {
+    // The simulation looks things up by id in records all the time. The ids are never raw player
+    // text: an intent is checked against the scenario's own ids before the engine uses it, and the
+    // validator checks every id inside the scenario. The rule cannot see that, so it flags every
+    // lookup. Writes into records that hold system ids are additionally guarded with Object.hasOwn.
+    files: ["src/**/*.ts", "tests/**/*.ts"],
+    rules: { "security/detect-object-injection": "off" },
+  },
 );
