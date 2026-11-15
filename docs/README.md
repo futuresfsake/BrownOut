@@ -23,6 +23,7 @@ For someone about to build it:
 | | [decision-log.md](00-overview/decision-log.md) | Decisions made, with reasons |
 | | [open-decisions.md](00-overview/open-decisions.md) | Decisions not yet made, risks, known limits |
 | 01-product | [gameplay.md](01-product/gameplay.md) | Rules of play and a worked session |
+| | [user-stories.md](01-product/user-stories.md) | 51 stories with acceptance criteria, grouped by milestone |
 | | [features.md](01-product/features.md) | Feature list with priorities |
 | | [milestones.md](01-product/milestones.md) | M0 to M6 with exit criteria |
 | 02-requirements | [specs.md](02-requirements/specs.md) | Functional and non-functional requirements |
