@@ -2,7 +2,19 @@
 
 A crisis war-room simulator. You are the person in charge of a company incident. The model plays everyone else: the CTO, support, legal, the press, and the incident itself.
 
-> **Status: design phase.** This repository holds the product and technical documentation. There is no application code yet. The build starts at milestone M0 in [docs/01-product/milestones.md](docs/01-product/milestones.md).
+> **Status: milestone M0 is built.** The repository has its guards (secrets scan, static analysis, dependency audit, lint, type-check, tests, CI) and the full design documentation. There is no application code yet. Next is M1, the simulation engine, in [docs/01-product/milestones.md](docs/01-product/milestones.md).
+
+## Getting started
+
+Needs Node 22 or newer and [gitleaks](https://github.com/gitleaks/gitleaks) on your PATH. Python 3 is needed once, to install semgrep.
+
+```
+npm ci                  # installs dependencies and points git at .githooks
+npm run tools:semgrep   # installs the pinned semgrep into .tools/
+npm test
+```
+
+Every commit runs the secrets scan, lint, type-check and tests. Every push also runs static analysis, a dependency audit and a scan of the whole history. A check whose tool is missing fails and says which tool; it never passes silently. Details are in [workflows](docs/07-process/workflows.md).
 
 ## What it is
 

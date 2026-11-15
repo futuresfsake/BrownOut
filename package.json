@@ -1,0 +1,37 @@
+{
+  "name": "brownout",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Crisis war-room simulator: you run the incident, the model plays everyone else.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "node tools/install-hooks.mjs",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "check:secrets": "node tools/secrets.mjs tree",
+    "check:tracked": "node tools/check-tracked.mjs",
+    "check:audit": "node tools/audit.mjs",
+    "check:semgrep": "node tools/semgrep.mjs",
+    "tools:semgrep": "node tools/install-semgrep.mjs",
+    "hooks:install": "node tools/install-hooks.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.1.0",
+    "eslint": "^10.15.0",
+    "eslint-plugin-security": "^4.2.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  }
+}

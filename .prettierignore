@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.tools/
+cassettes/
+testresults/
+package-lock.json
+docs/
+README.md

@@ -1,0 +1,3 @@
+#!/bin/sh
+# History secrets scan, static analysis, dependency audit, and the full checks.
+exec node tools/hook.mjs pre-push

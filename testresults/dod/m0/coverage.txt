@@ -1,0 +1,19 @@
+﻿
+ RUN  v5.1.0 <repo>
+      Coverage enabled with v8
+
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  21:06:12
+   Duration  3.43s (tests 99%, worker 1%, import 1%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : Unknown% ( 0/0 )
+Branches     : Unknown% ( 0/0 )
+Functions    : Unknown% ( 0/0 )
+Lines        : Unknown% ( 0/0 )
+================================================================================
+

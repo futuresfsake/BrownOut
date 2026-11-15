@@ -40,10 +40,14 @@ git config core.hooksPath .githooks
 
 | Hook | Runs |
 |---|---|
-| `pre-commit` | gitleaks on staged changes, tracked-file check (no env files, no local paths), ESLint, type-check, unit tests for changed areas |
-| `pre-push` | gitleaks on the commits being pushed, semgrep, `npm audit --omit=dev`, full test suite, scenario validation |
+| `pre-commit` | gitleaks on staged changes, tracked-file check (no env or key files, no local paths, no tool files), ESLint, type-check, tests |
+| `pre-push` | gitleaks on the whole history, tracked-file check, commit-message check (no co-author trailers or tool banners), semgrep, `npm audit --omit=dev`, ESLint, type-check, tests, scenario validation once it exists (M1) |
 
 The hooks call scripts in `tools/` so that CI runs exactly the same commands. A check that cannot run because a tool is missing fails with a message naming the tool. It does not pass silently.
+
+Tool versions for gitleaks and semgrep are pinned in `tools/versions.json`, which both CI and `npm run tools:semgrep` read. ESLint runs with `--max-warnings 0`. GitHub Actions are pinned to commit SHAs.
+
+Known dependency advisory at M0: one moderate, dev-only issue in the lint toolchain (`minimatch`, reached through `typescript-eslint`). Production dependencies have none. It is left alone because npm's suggested fix downgrades `typescript-eslint`; Dependabot will offer the upstream fix.
 
 ## Continuous integration
 
