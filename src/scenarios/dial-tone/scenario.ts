@@ -38,6 +38,7 @@ export const dialTone: Scenario = {
       startTrust: 60,
       channel: "chat",
       audience: "internal",
+      aliases: ["cto", "chief technology officer", "the boss", "my boss"],
     },
     {
       id: "support",
@@ -49,6 +50,7 @@ export const dialTone: Scenario = {
       startTrust: 60,
       channel: "chat",
       audience: "internal",
+      aliases: ["support", "support lead", "head of support", "customer support", "helpdesk"],
     },
     {
       id: "counsel",
@@ -60,6 +62,7 @@ export const dialTone: Scenario = {
       startTrust: 60,
       channel: "email",
       audience: "sensitive",
+      aliases: ["counsel", "legal", "lawyer", "lawyers", "general counsel"],
     },
     {
       id: "comms",
@@ -71,6 +74,7 @@ export const dialTone: Scenario = {
       startTrust: 60,
       channel: "chat",
       audience: "internal",
+      aliases: ["comms", "communications", "pr", "pr team", "comms lead"],
     },
     {
       id: "journalist",
@@ -82,6 +86,7 @@ export const dialTone: Scenario = {
       startTrust: 50,
       channel: "press",
       audience: "press",
+      aliases: ["journalist", "reporter", "press", "media", "daily circuit", "newspaper"],
     },
     {
       id: "customer",
@@ -93,6 +98,7 @@ export const dialTone: Scenario = {
       startTrust: 60,
       channel: "email",
       audience: "sensitive",
+      aliases: ["hospital", "calder valley", "hospital group"],
     },
     {
       id: "regulator",
@@ -104,6 +110,13 @@ export const dialTone: Scenario = {
       startTrust: 60,
       channel: "chat",
       audience: "sensitive",
+      aliases: [
+        "regulator",
+        "authority",
+        "telecommunications authority",
+        "duty officer",
+        "duty line",
+      ],
     },
   ],
 
@@ -327,7 +340,7 @@ export const dialTone: Scenario = {
         "What changed recently?",
         "Any deploys or config changes on the auth cluster?",
         "What was the last change before this started?",
-        "Check the change log for authentication",
+        "Check the change history for authentication",
       ],
       reveals: ["cert-rotation-0152", "missing-intermediate"],
       resultPurpose: "Report the certificate rotation and the incomplete bundle",
@@ -528,6 +541,15 @@ export const dialTone: Scenario = {
       statementTrue: true,
       supportsAsserts: ["missing-intermediate"],
       supportsDenies: [],
+      phrases: [
+        "cert",
+        "identified the cause",
+        "found the cause",
+        "know the cause",
+        "cause identified",
+        "bundle",
+        "root cause",
+      ],
     },
     {
       id: "billing-is-cause",
@@ -535,6 +557,15 @@ export const dialTone: Scenario = {
       statementTrue: false,
       supportsAsserts: [],
       supportsDenies: ["billing-deploy-benign", "billing-errors-are-timeouts"],
+      phrases: [
+        "billing cause",
+        "billing caused",
+        "billing broke",
+        "because of billing",
+        "billing problem",
+        "billing bug",
+        "billing deploy fault",
+      ],
       surfacesWhen: { type: "clue", id: "billing-deploy-benign" },
     },
     {
@@ -543,6 +574,7 @@ export const dialTone: Scenario = {
       statementTrue: false,
       supportsAsserts: [],
       supportsDenies: ["retry-storm"],
+      phrases: ["attack"],
       surfacesWhen: { type: "clue", id: "retry-storm" },
     },
     {
@@ -551,6 +583,17 @@ export const dialTone: Scenario = {
       statementTrue: false,
       supportsAsserts: [],
       supportsDenies: ["no-unusual-access"],
+      phrases: [
+        "data exposed",
+        "data affected",
+        "data breach",
+        "data leak",
+        "data accessed",
+        "data stolen",
+        "data compromised",
+        "customer data",
+        "exposure",
+      ],
     },
     {
       id: "emergency-affected",
@@ -559,6 +602,7 @@ export const dialTone: Scenario = {
       trueFromMinute: 10,
       supportsAsserts: ["emergency-degraded"],
       supportsDenies: [],
+      phrases: ["emergency"],
       surfacesWhen: { type: "minuteAtLeast", value: 31 },
     },
   ],
@@ -615,6 +659,9 @@ export const dialTone: Scenario = {
       purpose: "Demand an ETA within 10 minutes",
       facts: ["The CTO wants an ETA within 10 minutes."],
       fallbackText: "Ramon: What's the ETA? I need something I can tell the board in 10 minutes.",
+      variants: {
+        high: "Ramon: What's the ETA? Anything I can give the board in 10 minutes helps.",
+      },
     },
     {
       id: "support-tickets",
@@ -740,6 +787,9 @@ export const dialTone: Scenario = {
       purpose: "Report the ticket count and ask for an updated line",
       facts: ["{tickets} support tickets are open."],
       fallbackText: "Joy: Tickets are at {tickets}. My agents need an updated line.",
+      variants: {
+        low: "Joy: Tickets are at {tickets} and my agents have nothing to say. I need a line now.",
+      },
     },
     {
       id: "cto-board",
@@ -750,6 +800,10 @@ export const dialTone: Scenario = {
       purpose: "A board member is awake and asking",
       facts: ["A board member is asking for an update."],
       fallbackText: "Ramon: A board member is awake and asking. What can I tell them?",
+      variants: {
+        low: "Ramon: A board member is awake and asking, and I have nothing from you. What do I tell them?",
+        high: "Ramon: A board member is awake and asking. Give me two lines when you can.",
+      },
     },
     {
       id: "regulator-calls",
@@ -960,6 +1014,120 @@ export const dialTone: Scenario = {
         text: "Service is restored. All clear.",
         directives: ["all-clear"],
       },
+    },
+  ],
+
+  synonyms: {
+    auth: ["auth-core", "auth core", "auth cluster", "authentication cluster"],
+    billing: ["billing service", "billing api", "billing system", "invoicing"],
+    gateway: ["packet gateway", "core network", "data path"],
+    bundle: ["cert bundle", "certificate bundle", "certificate chain", "bundles"],
+    regulator: ["telecommunications authority", "the authority", "duty line"],
+  },
+
+  lessons: [
+    {
+      id: "asked-what-changed",
+      kind: "avoided",
+      when: {
+        type: "all",
+        of: [
+          { type: "clue", id: "missing-intermediate" },
+          { type: "not", of: { type: "mitigation", id: "restart-all-auth" } },
+        ],
+      },
+      text: "You found out what had changed before you changed anything yourself. That is the shortest route to most causes.",
+      evidence: { type: "clue_revealed", id: "missing-intermediate" },
+    },
+    {
+      id: "restarted-everything",
+      kind: "fell",
+      when: { type: "mitigation", id: "restart-all-auth" },
+      text: "Restarting every sign-in server made every connected phone sign in again, against servers that were still broken. Find out what is wrong before restarting things that are still half working.",
+      evidence: { type: "mitigation_applied", id: "restart-all-auth" },
+    },
+    {
+      id: "chased-billing",
+      kind: "fell",
+      when: { type: "mitigation", id: "rollback-billing" },
+      text: "Rolling back the billing release cost ten minutes and fixed nothing. The billing errors were a symptom of the sign-in problem, not its cause.",
+      evidence: { type: "mitigation_applied", id: "rollback-billing" },
+    },
+    {
+      id: "throttled-customers",
+      kind: "fell",
+      when: { type: "mitigation", id: "block-retry-traffic" },
+      text: "The traffic you rate-limited was your own customers trying again. Look at who is sending a flood before you block it.",
+      evidence: { type: "mitigation_applied", id: "block-retry-traffic" },
+    },
+    {
+      id: "called-it-an-attack",
+      kind: "fell",
+      when: { type: "claim", topic: "under-attack", stance: "asserts" },
+      text: "You called it an attack before anyone had looked at the traffic. Once said, that has to be taken back in writing.",
+      evidence: { type: "claim", id: "under-attack" },
+    },
+    {
+      id: "denied-emergency-impact",
+      kind: "fell",
+      when: { type: "claim", topic: "emergency-affected", stance: "denies", truth: "false" },
+      text: "You said emergency calling was fine without checking. When a statement is about safety, 'we are checking' is the only safe answer until you have checked.",
+      evidence: { type: "claim", id: "emergency-affected" },
+    },
+    {
+      id: "honest-with-counsel",
+      kind: "avoided",
+      when: { type: "claim", topic: "data-exposed", stance: "uncertain" },
+      text: "You told counsel what you knew and what you had not yet checked. That is an answer a lawyer can use.",
+      evidence: { type: "claim", id: "data-exposed" },
+    },
+    {
+      id: "overclaimed-no-exposure",
+      kind: "fell",
+      when: { type: "claim", topic: "data-exposed", stance: "denies", supported: false },
+      text: "You said no data was exposed before the access logs had been read. It happened to be true, but you could not have known.",
+      evidence: { type: "claim", id: "data-exposed" },
+    },
+    {
+      id: "broke-a-promise",
+      kind: "fell",
+      when: { type: "commitmentBroken" },
+      text: "You promised an update by a set time and missed it. A missed time costs more trust than saying 'no ETA yet'.",
+      evidence: { type: "commitment_broken" },
+    },
+    {
+      id: "status-page-early",
+      kind: "avoided",
+      when: { type: "obligation", id: "status-page", state: "met" },
+      text: "You had the status page changed early, so customers heard about the outage from you.",
+      evidence: { type: "directive", id: "update-status-page" },
+    },
+    {
+      id: "status-page-late",
+      kind: "fell",
+      when: {
+        type: "any",
+        of: [
+          { type: "obligation", id: "status-page", state: "missed" },
+          { type: "obligation", id: "status-page", state: "late" },
+        ],
+      },
+      text: "The public status page said 'all systems normal' for the first 25 minutes of an outage. Customers notice that before anything else.",
+      evidence: { type: "obligation", id: "status-page" },
+    },
+    {
+      id: "regulator-on-time",
+      kind: "avoided",
+      when: { type: "obligation", id: "notify-regulator", state: "met" },
+      text: "You told the regulator about the emergency-calling problem as soon as you knew, and before they asked.",
+      evidence: { type: "directive", id: "notify-regulator" },
+    },
+    {
+      id: "regulator-missed",
+      kind: "fell",
+      when: { type: "obligation", id: "notify-regulator", state: "missed" },
+      text: "The regulator heard about the emergency-calling problem from someone else and had to call you.",
+      evidence: { type: "obligation", id: "notify-regulator" },
     },
   ],
 };

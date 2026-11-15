@@ -6,11 +6,11 @@ Each entry has a default. The build proceeds on the default until the owner deci
 
 | ID | Question | Default | Decide by |
 |---|---|---|---|
-| O-01 | Should the public deployment allow live play, and who pays for it? | No. Public demo is replay only. Live play runs locally with the player's own key in `.env`. | M6 |
-| O-02 | Where is the demo hosted? | Render free web service, replay mode, no secrets configured. | M6 |
-| O-03 | Should the interpret step move to a smaller, faster model? | Stay on `claude-fable-5-2` at low effort. Revisit with the latency and accuracy numbers from the M2 spike. | End of M2 |
+| O-01 | Should the public deployment allow live play, and who pays for it? | Decided (DL-24, DL-26): yes, and nobody pays. The game runs in the browser with no model. | Done |
+| O-02 | Where is the demo hosted? | Free static hosting (GitHub Pages). | M6 |
+| O-03 | Should the interpret step move to a smaller, faster model? | No longer applies (DL-24): there is no model. | Done |
 | O-04 | Which licence? | None yet, which means all rights reserved. | Before M6 |
-| O-05 | Model-generated scenarios? | Not in version 1. If added later, the generated scenario must pass the same schema and solvability checks as an authored one. | After M6 |
+| O-05 | Model-generated scenarios? | No. Situations are authored, from the catalogue of one hundred (DL-28). | Done |
 | O-06 | Is pausing allowed? | Yes. It is a practice tool. A "no pause" option can come later. | M3 |
 | O-07 | Should scenario 1 be set in a named country with its real regulator? | No. Fictional carrier, fictional regulator, simplified deadlines. Real law would need review by someone qualified. | M5 |
 | O-08 | Is sound on by default? | Off. The player turns it on from the status strip. | M3 |
@@ -30,6 +30,10 @@ Each entry has a default. The build proceeds on the default until the owner deci
 | R-09 | The 3D room takes far longer than a flat page and delays everything after it. | The project stalls at M3. | M3 is split: stage A builds the panels and flat view and is a complete, playable interface. Stage B adds the room on top. Geometry is simple shapes built in code (DL-20). If stage B slips, the game still ships in flat view. |
 | R-10 | The room runs badly on ordinary laptops and phones. | Stutter, heat, drained battery. | Frames are drawn only when something changes. No real-time shadows or post-processing. Budgets in ui-design.md are measured on two reference devices. Flat view is offered when the frame rate stays low. |
 | R-11 | The room looks like a generic 3D demo. | It undercuts the point of building it. | One committed style (card model, toon shading, inked edges, the project palette). The "not allowed" list in ui-design.md. Screenshots reviewed by the owner before stage B is merged. |
+| R-12 | The local matcher misreads what the player typed. | The player feels unheard, which a model would have handled better. | It asks "did you mean" when candidates are close and lists the nearest options when nothing matches. Accuracy is measured on a labelled set per situation and enforced in the tests. |
+| R-13 | Authoring one hundred situations is too much work. | The catalogue is never finished. | Waves of ten from a shared kit, with a small authoring target per situation. The game is complete after wave 1. The validator stops a rushed situation from shipping. |
+
+Risks R-01, R-02, R-03 and R-08 were about the model (latency, cost, declined requests, API changes). They no longer apply since DL-24.
 
 ## Known limits
 
@@ -47,3 +51,5 @@ These are accepted for version 1 and should be stated in the README once the app
 | L-08 | No people are modelled in the room. Stakeholders are devices; the on-shift engineer is a lit desk. |
 | L-09 | The 3D room needs WebGL 2. Without it the game runs in flat view. |
 | L-10 | The camera has five fixed positions. The player cannot walk around or look freely. |
+| L-11 | Situation data, including the hidden cause, is in the files the browser downloads. A player who reads the page source can find the answer. |
+| L-12 | Understanding of typed text is limited to what the matcher and the authored phrasings cover. Unusual wording may need a second try. |

@@ -1,5 +1,7 @@
 # High-level design
 
+> **Updated by DL-24 and DL-26 (2026-11-16).** There is no model and no server in version 1. Where this document shows an interpret or narrate step, read "the local matcher" and "authored text". Where it shows a Node server, an HTTP API or a session store, read "the browser". The engine, the split of who decides what, and the client structure are unchanged. See [local-play.md](local-play.md). This document is rewritten when the web interface is built in M3.
+
 ## Parts
 
 ```mermaid

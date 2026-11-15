@@ -2,7 +2,7 @@
 
 ## One sentence
 
-BrownOut is a simulator where you run a company incident in real time and a language model plays the incident and every person who needs something from you.
+BrownOut is a simulator where you run a company incident in real time, typing what you do, while the incident and everyone who needs something from you respond.
 
 ## The problem
 
@@ -28,20 +28,24 @@ It gives one person a ten-minute incident they can run alone, as often as they l
 | A student or career changer | A feel for what incident command involves |
 | Someone reviewing the author's portfolio | A project that can be explained in a sentence and played in a few minutes |
 
-## Why a language model
+## Why no language model
 
-A scripted program can show a fixed sequence of messages. It cannot read "roll back the cert bundle on half the auth nodes first and watch the error rate" and answer sensibly, and it cannot write the CTO's third message so that it refers to the ETA you gave in your reply to the first one.
+The first design used a language model to read the player's text and write the replies. Version 1 does not (DL-24). A model costs money on every turn, needs a key, adds a wait, and can decline. For a practice tool that should be free to play and free to leave online, that was the wrong trade.
 
-Those two jobs, understanding free text and writing in a consistent voice over a long session, are what the model is used for. Everything that has to be exact is kept away from it.
+What replaces it:
+
+- A local matcher reads what the player typed and, when unsure, asks which of two or three things they meant.
+- Every message is authored, with variants, and the engine fills in the live numbers and the player's own earlier words.
+- Variety comes from a catalogue of one hundred situations and from seeds, not from generated text.
 
 ## Principles
 
-1. **The engine owns the facts, the model owns the words.** Numbers, timings, root cause, promises and scores live in code. The model never decides them.
-2. **Free text in, structured intent out.** The player is never forced into multiple choice. Their text is mapped to authored investigations and mitigations where one fits.
+1. **The engine owns the facts.** Numbers, timings, root cause, promises and scores live in code and are never improvised.
+2. **Free text in, structured intent out.** The player is never forced into multiple choice. Their text is matched to authored investigations and mitigations where one fits.
 3. **Consequences have a paper trail.** Anything the player is later held to (a promise, a public statement) is stored by the engine at the moment it is made, and the later consequence points back to it.
-4. **A session always finishes.** If the model is slow, declines, or returns something invalid, the engine falls back to authored text. The player is never stuck.
-5. **Reproducible.** The same scenario, seed and sequence of intents produce the same event log.
-6. **Short.** One scenario fits in about ten minutes of play.
+4. **Free to play and free to host.** No paid service anywhere. If something would cost money, a local alternative is built.
+5. **Reproducible.** The same situation, seed and sequence of intents produce the same event log.
+6. **Short.** One situation fits in about ten minutes of play.
 
 ## Non-goals
 
@@ -50,7 +54,7 @@ Those two jobs, understanding free text and writing in a consistent voice over a
 - Not a 3D exploration game. The room is somewhere to sit and work, with fixed views. There is nothing to walk around and find.
 - Not a certification or an assessment anyone should be hired or fired on.
 - No accounts, profiles or leaderboards in version 1.
-- No scenario generated entirely by the model in version 1. Scenarios are authored. See O-05.
+- No generated content. Every situation and every line is authored.
 - Not legal advice. Regulatory deadlines in the scenarios are fictional and simplified.
 
 ## What success looks like

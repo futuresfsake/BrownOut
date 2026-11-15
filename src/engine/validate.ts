@@ -147,6 +147,10 @@ function checkReferences(sc: Scenario, errors: string[]): void {
     if (b.quotesClaim) need("topic", b.quotesClaim, `beat ${b.id}.quotesClaim`);
   }
   check(sc.endings.resolvedWhen, "endings.resolvedWhen");
+  for (const dup of duplicates((sc.lessons ?? []).map((l) => l.id))) {
+    errors.push(`lessons: duplicate id "${dup}"`);
+  }
+  for (const lesson of sc.lessons ?? []) check(lesson.when, `lesson ${lesson.id}.when`);
   for (const [n, step] of sc.idealPath.entries()) {
     const where = `idealPath[${n}]`;
     const intent = step.intent;
@@ -227,7 +231,20 @@ function checkAuthoring(sc: Scenario, errors: string[]): void {
       if (!known.has(n)) errors.push(`${where}: the number "${n}" is not in its facts`);
     }
   };
-  for (const b of sc.beats) extra(b.fallbackText, b.facts, `beat ${b.id}`);
+  for (const b of sc.beats) {
+    extra(b.fallbackText, b.facts, `beat ${b.id}`);
+    if (b.variants?.low) extra(b.variants.low, b.facts, `beat ${b.id}.variants.low`);
+    if (b.variants?.high) extra(b.variants.high, b.facts, `beat ${b.id}.variants.high`);
+  }
+  // The matcher can only notice a statement about a topic if the topic says what to listen for.
+  for (const t of sc.claimTopics) {
+    if (!t.phrases || t.phrases.length === 0) {
+      errors.push(`topic ${t.id}: needs at least one phrase so typed statements can be recognised`);
+    }
+  }
+  if (!sc.lessons || sc.lessons.length === 0) {
+    errors.push("lessons: a situation needs at least one lesson for its debrief");
+  }
   const clueFact = (id: string) => sc.clues.find((c) => c.id === id)?.fact ?? "";
   for (const i of sc.investigations) {
     const allowed = [...i.reveals.map(clueFact), ...(i.facts ?? [])];

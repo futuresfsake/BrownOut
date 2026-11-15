@@ -48,17 +48,19 @@ Priority: **must** is needed for version 1, **should** is planned for version 1 
 | F-27 | Four endings: resolved, relieved, time out, ended by player | must | M1 |
 | F-28 | Terminal runner for playing a scenario without the model or the interface | must | M1 |
 
-## Model
+## Understanding and words
+
+No model is used. See [local play](../03-design/local-play.md).
 
 | ID | Feature | Priority | Milestone |
 |---|---|---|---|
-| F-30 | Interpret step: free text to structured intent | must | M2 |
-| F-31 | Narrate step: resolved facts to written messages in each stakeholder's voice | must | M2 |
-| F-32 | Numeric guard and leak check on narrated text | must | M2 |
-| F-33 | Authored fallback text when the model fails | must | M2 |
-| F-34 | Recorded responses (cassettes) for repeatable runs | must | M2 |
-| F-35 | Token usage and cost recorded per call | must | M2 |
-| F-36 | Daily budget switch that turns live play off | must | M2 |
+| F-30 | Local matcher: free text to intent, with no network | must | M2 |
+| F-31 | "Did you mean" when two or three options are close, at no time cost | must | M2 |
+| F-32 | The nearest options shown when nothing matches | must | M2 |
+| F-33 | Claims and promises found in typed text | must | M2 |
+| F-34 | Authored text variants by trust level, chosen by the seed | should | M2 |
+| F-35 | A labelled accuracy set per situation, run in the test suite | must | M2 |
+| F-36 | No network use anywhere in the game, enforced by a test | must | M2 |
 
 ## Debrief
 
@@ -66,7 +68,7 @@ Priority: **must** is needed for version 1, **should** is planned for version 1 
 |---|---|---|---|
 | F-40 | Score in five dimensions, each with the events that produced it | must | M4 |
 | F-41 | Timeline of the session with the key moments marked | must | M4 |
-| F-42 | Written debrief: went well, missed, one thing to change | must | M4 |
+| F-42 | Debrief text: went well, missed, one thing to change, assembled from score lines and authored lessons | must | M4 |
 | F-43 | "A stronger response" shown as an alternative timeline | must | M4 |
 | F-44 | Export the session as a JSON event log | must | M4 |
 | F-45 | Replay an exported or bundled session | must | M4 |
@@ -77,9 +79,9 @@ Priority: **must** is needed for version 1, **should** is planned for version 1 
 | ID | Feature | Priority | Milestone |
 |---|---|---|---|
 | F-50 | Scenario 1, Dial Tone: carrier outage | must | M1 |
-| F-51 | Scenario 2, Open Bucket: data exposure | should | M5 |
-| F-52 | Scenario 3, Slow Burn: an outage that is really an attack | should | M5 |
+| F-51 | Wave 1: nine more situations from the catalogue, including Open Bucket and Slow Burn | should | M5 |
+| F-52 | Shared kit of stakeholder types, common investigations and common duties | should | M5 |
 | F-53 | Scenario validation tool that proves each scenario is solvable | must | M1 |
 | F-54 | Difficulty settings | later | |
-| F-55 | Model-generated scenarios | later | |
+| F-55 | The remaining ninety situations, in waves of ten | later | |
 | F-56 | Team play | later | |

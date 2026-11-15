@@ -1,5 +1,7 @@
 # HTTP API
 
+> **Not part of version 1.** Since decision DL-24 (2026-11-16) BrownOut uses no language model. The game runs in the browser and has no HTTP API (DL-26). This document is kept for reference only.
+
 JSON over HTTP. Every request body and every response is validated with a zod schema from `src/shared`. All routes are under `/api`.
 
 ## Routes

@@ -34,21 +34,21 @@ Build the whole simulation as a pure module and make scenario 1 playable in a te
 
 **Exit:** the ideal path of scenario 1 ends resolved with a score at or above 85. The "restart everything" path shows the impact spike. The same seed and the same intents produce an identical event log across two runs. Engine line coverage is at or above 90 percent.
 
-## M2: Model pipeline
+## M2: Local play
 
 **Stories:** US-16 to US-24.
 
-Connect interpret and narrate. Start with a measurement spike.
+Make scenario 1 playable by typing, with no model and no network. See [local play](../03-design/local-play.md).
 
-- **Spike first:** ten scripted turns of scenario 1 against the live model. Record latency and token usage per call at low and medium effort. Write the results to `docs/05-quality/` and settle O-03.
-- Interpret and narrate calls with schemas built from the scenario.
-- Guards: schema validation, numeric guard, leak check, one retry, then fallback text.
-- Refusal and truncation handling.
-- Cassette recording and playback.
-- Usage logging and the daily budget switch.
-- Interpreter accuracy set: at least 40 labelled actions for scenario 1.
+- The matcher: clean-up, synonyms, ranked matching against labels and example phrasings.
+- Recipients, claims and promises found in typed text.
+- Three outcomes: act, "did you mean", or not understood with the nearest options.
+- An accuracy set of at least 40 labelled phrasings for scenario 1, run in the normal test suite.
+- Text variants by trust level, chosen by the seed.
+- The debrief assembled from score lines, authored lessons and the ideal path.
+- The terminal runner accepts typed text.
 
-**Exit:** scenario 1 is playable in the terminal with free text. Interpreter accuracy on the labelled set is at or above 90 percent. A scripted 15-turn session produces no numeric guard failure that reaches the player. The estimate in model-contract.md is replaced with measured cost and latency.
+**Exit:** scenario 1 is playable in the terminal by typing. The matcher puts the right option first for at least 85 percent of the accuracy set and within "did you mean" for at least 97 percent. Nonsense, very long and instruction-style input never changes anything beyond one minute of time. A test fails if anything under `src` uses the network.
 
 ## M3: Web interface
 
@@ -60,11 +60,11 @@ State the visual direction in each pull request before building, as [ui-design](
 
 **Stories:** US-25 to US-31.
 
-- Scenario picker, briefing, and the play screen in flat view against the turn stream.
+- Scenario picker, briefing, and the play screen in flat view, with the engine running in the browser.
 - Board, log, inbox and press panels, the decision box and the status strip, with all panel states listed in ui-design.md.
 - Idle clock, pause, wait, end.
 - Desktop and phone layouts.
-- Playwright tests running against a cassette.
+- Playwright tests driving the built site with a fixed seed.
 
 **Exit A:** scenario 1 is playable in a browser in flat view from briefing to an ending. Screenshots at 1440, 768 and 375 pixels wide are saved as evidence. Automated accessibility checks report no serious or critical issue. Keyboard-only play works.
 
@@ -86,30 +86,34 @@ State the visual direction in each pull request before building, as [ui-design](
 
 **Stories:** US-39 to US-44.
 
-- Debrief call with event citations checked by the engine.
-- Debrief screen: scores with evidence, marked timeline, alternative timeline.
+- Debrief screen: scores with evidence, marked timeline, lessons, the stronger response beside what the player did.
 - Export a session. Load and replay a session, validated before use.
-- Replay mode for the whole app, with one bundled session.
+- A bundled sample session to watch.
 
-**Exit:** a finished session shows a debrief in which every cited event exists in the log. An exported file replays to the same final state. Starting the server with no API key gives a working replay-only app.
+**Exit:** every statement in the debrief points at an event that exists in the log. An exported file replays to the same final state. The built site works from static files with no server.
 
-## M5: Scenarios 2 and 3
+## M5: Situations, wave 1
 
 **Stories:** US-45 to US-47.
 
-- Author Open Bucket and Slow Burn from the briefs in [scenarios](../03-design/scenarios.md).
-- Each passes the validator and has an interpreter accuracy set.
-- Scripted playthroughs per scenario: one ideal, one poor, one dishonest.
+Nine more situations from the [catalogue](../03-design/situation-catalog.md), one from each remaining group, so that ten are playable: S-011, S-021, S-032, S-041, S-055, S-066, S-072, S-082, S-097.
 
-**Exit:** all three scenarios pass their scripted playthroughs. In the dishonest playthrough of scenario 3 the false statement is quoted back to the player before the session ends.
+- The shared kit: stakeholder types, common investigations and common duties, written once.
+- Each situation passes the validator and has an accuracy set and scripted ideal, poor and dishonest playthroughs.
+
+**Exit:** all ten situations pass the validator and their playthroughs. In the dishonest playthrough of S-021 the false statement is quoted back to the player before the session ends.
 
 ## M6: Demo and close-out
 
 **Stories:** US-48 to US-51.
 
-- Public replay deployment (O-01, O-02).
+- Public deployment on free static hosting. The game is fully playable there.
 - README rewritten for a visitor: what it is, screenshots, a short recording, how to run it locally, known limits.
 - Licence decision (O-04).
 - Final self-audit against these documents, saved under `docs/10-reviews/`.
 
-**Exit:** the public URL loads and replays a session with no API key on the server. A full secrets scan of the whole git history is clean. Every must-priority feature in features.md is either done or listed as a known limit.
+**Exit:** the public URL loads and a situation can be played from start to debrief with no server and no secret anywhere. A full secrets scan of the whole git history is clean. Every must-priority feature in features.md is either done or listed as a known limit.
+
+## After M6: more waves
+
+The remaining ninety situations are added ten at a time. Each wave has the same exit as M5.

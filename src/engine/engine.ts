@@ -36,6 +36,8 @@ export const TRUST = {
   unansweredPerMinute: -1,
   commitmentBroken: -12,
   falseClaimSurfaced: -20,
+  lowBelow: 35,
+  highAbove: 70,
 } as const;
 
 const NOTABLE: ReadonlySet<EventType> = new Set([
@@ -179,6 +181,11 @@ function evalCondition(ctx: Ctx, c: Condition): boolean {
     case "not":
       return !evalCondition(ctx, c.of);
   }
+}
+
+/** Evaluates a scenario condition against a session. Used by the debrief and by tests. */
+export function checkCondition(sc: Scenario, st: SessionState, c: Condition): boolean {
+  return evalCondition({ sc, st, events: [], requests: [] }, c);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -380,7 +387,15 @@ function fireBeat(ctx: Ctx, beat: Beat): void {
   }
   const broken = [...st.commitments].reverse().find((k) => k.status === "broken");
   if (broken && broken.dueMinute !== null) extras.brokenDue = clockOf(ctx.sc, broken.dueMinute);
-  const text = fill(ctx, beat.fallbackText, extras);
+  // The sender's wording changes with how much they trust the player.
+  const trust = st.trust[beat.from] ?? 50;
+  const variant =
+    trust < TRUST.lowBelow
+      ? beat.variants?.low
+      : trust > TRUST.highAbove
+        ? beat.variants?.high
+        : undefined;
+  const text = fill(ctx, variant ?? beat.fallbackText, extras);
   const facts = beat.facts.map((f) => fill(ctx, f, extras));
   deliver(ctx, beat.from, beat.channel, text, beat.purpose, facts, beat.id, quote);
 }

@@ -1,5 +1,7 @@
 # Model contract
 
+> **Not part of version 1.** Since decision DL-24 (2026-11-16) BrownOut uses no language model. This document describes how a model could be added later behind the same `Intent` interface. What version 1 does instead is in [local-play.md](local-play.md).
+
 How BrownOut calls the model, what it sends, what it accepts back, and what it does when the answer is not acceptable.
 
 > API details here were checked on 2026-11-15. Confirm them against the current Anthropic SDK documentation at the start of milestone M2 (risk R-08). Where this document and the SDK disagree, the SDK wins and this document gets corrected.
