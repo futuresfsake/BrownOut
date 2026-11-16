@@ -156,7 +156,8 @@ function evalCondition(ctx: Ctx, c: Condition): boolean {
           (c.stance === undefined || k.stance === c.stance) &&
           (c.truth === undefined || k.truth === c.truth) &&
           (c.supported === undefined || k.supported === c.supported) &&
-          (c.to === undefined || k.audience.includes(c.to)),
+          (c.to === undefined || k.audience.includes(c.to)) &&
+          (c.corrected === undefined || k.corrected === c.corrected),
       );
     case "trustBelow":
       return (st.trust[c.who] ?? 0) < c.value;
@@ -379,7 +380,11 @@ function fireBeat(ctx: Ctx, beat: Beat): void {
   const extras: Record<string, string> = {};
   let quote: string | undefined;
   if (beat.quotesClaim) {
-    const claim = [...st.claims].reverse().find((k) => k.topic === beat.quotesClaim);
+    // What is quoted back is the statement that was wrong and still stands, if there is one.
+    // A later, true statement on the same topic to someone else must not be quoted in its place.
+    const onTopic = st.claims.filter((k) => k.topic === beat.quotesClaim);
+    const claim =
+      [...onTopic].reverse().find((k) => k.truth === "false" && !k.corrected) ?? onTopic.at(-1);
     if (claim) {
       quote = claim.text;
       extras.quote = claim.text;

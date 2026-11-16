@@ -23,6 +23,8 @@ export type Condition =
       truth?: Truth | undefined;
       supported?: boolean | undefined;
       to?: string | undefined;
+      /** Whether the player has since taken the statement back themselves. */
+      corrected?: boolean | undefined;
     }
   | { type: "trustBelow"; who: string; value: number }
   | { type: "beatFired"; id: string }
@@ -56,6 +58,7 @@ export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
       truth: truth.optional(),
       supported: z.boolean().optional(),
       to: id.optional(),
+      corrected: z.boolean().optional(),
     }),
     z.strictObject({ type: z.literal("trustBelow"), who: id, value: z.number() }),
     z.strictObject({ type: z.literal("beatFired"), id }),

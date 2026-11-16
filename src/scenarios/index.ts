@@ -8,6 +8,9 @@ import { dialTone } from "./dial-tone/scenario.js";
 import { accuracy as openBucketAccuracy } from "./open-bucket/accuracy.js";
 import { playthroughs as openBucketPlaythroughs } from "./open-bucket/playthroughs.js";
 import { openBucket } from "./open-bucket/scenario.js";
+import { accuracy as slowBurnAccuracy } from "./slow-burn/accuracy.js";
+import { playthroughs as slowBurnPlaythroughs } from "./slow-burn/playthroughs.js";
+import { slowBurn } from "./slow-burn/scenario.js";
 
 export interface ScenarioEntry {
   /** The number in the catalogue, as in docs/03-design/situation-catalog.md. */
@@ -29,6 +32,12 @@ export const scenarios: ScenarioEntry[] = [
     scenario: openBucket,
     playthroughs: openBucketPlaythroughs,
     accuracy: openBucketAccuracy,
+  },
+  {
+    catalogue: "S-021",
+    scenario: slowBurn,
+    playthroughs: slowBurnPlaythroughs,
+    accuracy: slowBurnAccuracy,
   },
 ];
 

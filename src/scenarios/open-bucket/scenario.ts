@@ -375,9 +375,9 @@ export const openBucket: Scenario = {
       examples: [
         "Tell every clinic to treat all of its patients as exposed",
         "Notify all clinics on the worst-case basis",
-        "We cannot narrow it down, so warn everyone",
+        "We cannot narrow it down, so warn every clinic on the worst case",
         "Send the worst-case notice to every clinic",
-        "Assume everyone is affected and tell the clinics so",
+        "Assume every patient is affected and write to the clinics on that basis",
       ],
       onComplete: { mode: "accounted" },
       resultPurpose: "Report that every clinic has been told to assume the worst",

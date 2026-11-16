@@ -324,6 +324,131 @@ describe("S-011 Open Bucket", () => {
   });
 });
 
+describe("S-021 Slow Burn", () => {
+  const { scenario: sc, playthroughs } = entry("slow-burn");
+  const tell = (
+    atMinute: number,
+    to: string[],
+    text: string,
+    claims: [string, "asserts" | "denies"][],
+  ) =>
+    ({
+      atMinute,
+      input: {
+        type: "intent",
+        intent: {
+          kind: "communicate",
+          to,
+          text,
+          claims: claims.map(([topic, stance]) => ({ topic, stance, text })),
+        },
+      },
+    }) as const;
+  const keepAlive = [16, 24, 32, 39].map((m) => tell(m, ["cto"], "Still working it.", []));
+  const LIE = "Post it: a performance issue, customers are not affected.";
+
+  it("has two different ways to the root cause", () => {
+    const ways = sc.investigations.filter((i) => i.reveals.includes(sc.scoring.rootCauseClue));
+    expect(ways.map((i) => i.id)).toEqual(["attempt-pattern", "compare-leaks"]);
+  });
+
+  it("looks like load at first: the overview says so and nothing says attack", () => {
+    const first = play(sc, [
+      { atMinute: 0, input: { type: "intent", intent: { kind: "investigate", id: "overview" } } },
+      { atMinute: 4, input: { type: "end" } },
+    ]).state;
+    expect(first.revealedClues).toEqual(["six-times-load"]);
+    expect(first.visibleMetrics).toEqual([]);
+  });
+
+  it("the first public statement is stored and quoted back, word for word, before the session ends", () => {
+    const { state } = play(sc, playthroughs.dishonest);
+    const story = state.threads.journalist?.messages.find((m) => m.beatId === "press-harsh");
+    expect(story?.text).toContain(`"${LIE}"`);
+    expect(state.firedBeats).not.toContain("press-fair");
+    const quoted = state.log.find((e) => e.type === "message" && e.data?.beatId === "press-harsh");
+    const ended = state.log.find((e) => e.type === "ended");
+    expect(quoted?.minute ?? 999).toBeLessThan(ended?.minute ?? 0);
+    expect(score(sc, state).overall).toBeLessThanOrEqual(69);
+  });
+
+  it("the statement is quoted even when a true one has since been made to someone else", () => {
+    const { state } = play(sc, [
+      tell(10, ["journalist"], "Customers are not affected.", [["customers-affected", "denies"]]),
+      tell(20, ["cto"], "Customer accounts are affected after all.", [
+        ["customers-affected", "asserts"],
+      ]),
+      ...keepAlive.slice(1),
+      { atMinute: 40, input: { type: "end" } },
+    ]);
+    const story = state.threads.journalist?.messages.find((m) => m.beatId === "press-harsh");
+    expect(story?.text).toContain('"Customers are not affected."');
+  });
+
+  it("correcting it yourself, before being asked, spares the story and is scored well", () => {
+    const caught = play(sc, [
+      tell(10, ["comms"], LIE, [["customers-affected", "denies"]]),
+      ...keepAlive,
+      { atMinute: 40, input: { type: "end" } },
+    ]).state;
+    const corrected = play(sc, [
+      tell(10, ["comms"], LIE, [["customers-affected", "denies"]]),
+      tell(20, ["comms"], "Take that down. Customer accounts are affected.", [
+        ["customers-affected", "asserts"],
+      ]),
+      ...keepAlive.slice(1),
+      { atMinute: 40, input: { type: "end" } },
+    ]).state;
+    expect(caught.firedBeats).toContain("press-harsh");
+    expect(corrected.firedBeats).not.toContain("press-harsh");
+    expect(corrected.log.some((e) => e.type === "claim_corrected")).toBe(true);
+    const honesty = (st: typeof caught) => score(sc, st).dimensions.honesty.score;
+    expect(honesty(corrected)).toBeGreaterThan(honesty(caught));
+    expect(
+      buildDebrief(sc, corrected)
+        .wentWell.map((p) => p.text)
+        .join(" "),
+    ).toContain("took your first statement back");
+  });
+
+  it("the careful answer costs nothing: 'we are investigating' is never quoted back", () => {
+    const { state } = play(sc, playthroughs.ideal);
+    expect(state.firedBeats).not.toContain("press-harsh");
+    expect(state.firedBeats).not.toContain("coo-first-version");
+    expect(state.claims.every((c) => c.truth !== "false")).toBe(true);
+  });
+
+  it("adding capacity helps the attacker: more accounts are entered, faster", () => {
+    const quiet = play(sc, playthroughs.silent).state;
+    const scaled = play(sc, [
+      { atMinute: 2, input: { type: "intent", intent: { kind: "mitigate", id: "add-capacity" } } },
+      ...[8, 16, 24].map((m) => tell(m, ["cto"], "Still working it.", [])),
+      { atMinute: 30, input: { type: "end" } },
+    ]).state;
+    const at = (st: typeof quiet, minute: number) => st.series.takenOver?.[minute] ?? 0;
+    expect(at(scaled, 20)).toBeGreaterThan(at(quiet, 20) * 1.4);
+    expect(scaled.systems.signin).toBe("ok");
+    expect(scaled.firedBeats).toContain("coo-capacity");
+  });
+
+  it("stopping the attack does not undo it: the noon payouts go unless they are held", () => {
+    const poor = play(sc, playthroughs.poor).state;
+    expect(poor.firedBeats).toContain("payout-run");
+    const ideal = play(sc, playthroughs.ideal).state;
+    expect(ideal.firedBeats).not.toContain("payout-run");
+    expect(ideal.systems.payouts).toBe("degraded");
+  });
+
+  it("security and the regulator hear it from the player in the ideal session, and ask in the poor one", () => {
+    const ideal = play(sc, playthroughs.ideal).state;
+    expect(score(sc, ideal).dimensions.obligations.score).toBe(100);
+    const poor = play(sc, playthroughs.poor).state;
+    expect(poor.firedBeats).toContain("security-not-called");
+    expect(poor.firedBeats).toContain("regulator-calls");
+    expect(poor.firedBeats).toContain("coo-first-version");
+  });
+});
+
 describe("naming someone is not always writing to them", () => {
   const { scenario: sc } = entry("open-bucket");
   const dial = entry("dial-tone").scenario;

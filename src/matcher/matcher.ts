@@ -163,9 +163,11 @@ function rank(sc: Scenario, index: Index, words: string[], only?: Option["type"]
 const names = (sc: Scenario, ids: string[]) =>
   ids.map((id) => sc.stakeholders.find((s) => s.id === id)?.name ?? id).join(", ");
 
+const EVERYONE = /\b(everyone|everybody|all of them|the team|all stakeholders|them all)\b/;
+
 function findRecipients(sc: Scenario, index: Index, cleaned: string): string[] {
   const found = index.aliases.filter((a) => a.pattern.test(cleaned)).map((a) => a.id);
-  if (/\b(everyone|everybody|all of them|the team|all stakeholders|them all)\b/.test(cleaned)) {
+  if (EVERYONE.test(cleaned)) {
     for (const id of WATCHED) {
       if (sc.stakeholders.some((s) => s.id === id) && !found.includes(id)) found.push(id);
     }
@@ -316,10 +318,20 @@ function readClause(sc: Scenario, index: Index, rawClause: string, ctx: ReadCont
   const words = tokens(raw, sc.synonyms ?? {});
 
   if (!ctx.threadId && words.length <= 4) {
-    if (/^(?:wait|hold on|hold|stand by|standby|do nothing|sit tight)\b/.test(cleaned)) {
+    // "hold" and "cancel" also begin orders ("hold the payouts", "cancel the campaign"), so as
+    // controls they must be the whole of what was typed, or be followed only by "it" or "that".
+    if (
+      /^(?:wait|hold on|stand by|standby|do nothing|sit tight)\b/.test(cleaned) ||
+      /^hold(?: it| off| that)?$/.test(cleaned)
+    ) {
       return { kind: "control", control: "wait" };
     }
-    if (/^(?:cancel|abort|stop that|stop it|stop mika|never mind|scrap that)\b/.test(cleaned)) {
+    if (
+      /^(?:cancel|abort)(?: it| that| this| the task| the job| what mika is doing)?$/.test(
+        cleaned,
+      ) ||
+      /^(?:stop that|stop it|stop mika|never mind|scrap that)\b/.test(cleaned)
+    ) {
       return { kind: "control", control: "cancelTask" };
     }
   }
@@ -332,6 +344,8 @@ function readClause(sc: Scenario, index: Index, rawClause: string, ctx: ReadCont
   const addressed =
     mentioned.length > 0 &&
     (SPEECH.test(cleaned) ||
+      // "everyone" and "the team" are only ever people being told something.
+      EVERYONE.test(cleaned) ||
       index.aliases.some((a) => {
         const found = a.pattern.exec(cleaned);
         return (

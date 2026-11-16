@@ -193,15 +193,17 @@ export function strongerBeside(sc: Scenario, session: SessionState): StrongerRow
   return steps.map((s) => {
     const intent = s.intent;
     let at = -1;
-    if (intent.kind === "investigate") {
-      at = findFrom(log, 0, (e) => e.type === "task_started" && e.data?.id === intent.id);
+    if (intent.kind === "investigate" || intent.kind === "mitigate") {
+      // The moment that counts is when the order was given, whether Mika started on it at once
+      // or put it behind the job already running.
+      at = findFrom(
+        log,
+        0,
+        (e) => (e.type === "task_started" || e.type === "task_queued") && e.data?.id === intent.id,
+      );
       if (at < 0) {
-        at = findFrom(log, 0, (e) => e.type === "task_completed" && e.data?.id === intent.id);
-      }
-    } else if (intent.kind === "mitigate") {
-      at = findFrom(log, 0, (e) => e.type === "task_started" && e.data?.id === intent.id);
-      if (at < 0) {
-        at = findFrom(log, 0, (e) => e.type === "mitigation_applied" && e.data?.id === intent.id);
+        const done = intent.kind === "investigate" ? "task_completed" : "mitigation_applied";
+        at = findFrom(log, 0, (e) => e.type === done && e.data?.id === intent.id);
       }
     } else if (intent.kind === "communicate") {
       const directive = intent.directives?.[0];
