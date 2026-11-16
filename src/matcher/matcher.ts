@@ -180,18 +180,32 @@ const UNCERTAIN =
 const NEGATIVE =
   /\b(?:no|not|never|none|nothing|without|unaffected|unrelated|fine|safe|secure|normal|working|ok|okay|ruled out|rule out)\b/;
 
-function findClaims(index: Index, raw: string, words: string[]) {
-  const cleaned = clean(raw);
-  if (QUESTION.test(raw.trim()) || QUESTION.test(cleaned)) return [];
-  const have = new Set(words);
-  const stance: Stance = UNCERTAIN.test(cleaned)
-    ? "uncertain"
-    : NEGATIVE.test(cleaned)
-      ? "denies"
-      : "asserts";
+/**
+ * Statements of fact in a message. A statement is asserted or denied by its own sentence: "we
+ * know the cause. Tell customers we are working on it" does not deny the cause because the next
+ * sentence says "working". A hedge anywhere in the message softens all of it. The quoted text is
+ * always the whole message, as the player wrote it.
+ */
+function findClaims(index: Index, raw: string, wordsOf: (text: string) => string[]) {
+  const whole = clean(raw);
+  if (QUESTION.test(raw.trim()) || QUESTION.test(whole)) return [];
+  const hedged = UNCERTAIN.test(whole);
+  const found = new Map<string, Stance>();
+  for (const sentence of raw.split(/(?<=[.!?;])\s+/)) {
+    const have = new Set(wordsOf(sentence));
+    const stance: Stance = hedged
+      ? "uncertain"
+      : NEGATIVE.test(clean(sentence))
+        ? "denies"
+        : "asserts";
+    for (const t of index.topics) {
+      if (found.has(t.id)) continue;
+      if (t.phrases.some((p) => p.every((w) => have.has(w)))) found.set(t.id, stance);
+    }
+  }
   return index.topics
-    .filter((t) => t.phrases.some((p) => p.every((w) => have.has(w))))
-    .map((t) => ({ topic: t.id, stance, text: raw.trim() }));
+    .filter((t) => found.has(t.id))
+    .map((t) => ({ topic: t.id, stance: found.get(t.id) as Stance, text: raw.trim() }));
 }
 
 const WILL =
@@ -236,7 +250,7 @@ function readClause(sc: Scenario, index: Index, rawClause: string, ctx: ReadCont
     const request = rank(sc, index, words, "directive")[0];
     const directives =
       request && request.score >= THRESHOLDS.directive ? request.intent : undefined;
-    const claims = findClaims(index, raw, words);
+    const claims = findClaims(index, raw, (text) => tokens(text, sc.synonyms ?? {}));
     const promises = findPromises(sc, raw, recipients, ctx.minute);
     const intent: Intent = {
       kind: "communicate",

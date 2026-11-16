@@ -1,61 +1,66 @@
 # Security overview
 
-> **Updated by DL-24 and DL-26 (2026-11-16).** There is no API key, no model and no server, so the rows below about the key, model spend, prompt injection and session IDs no longer describe a risk. What remains: the visitor's browser (all text is rendered as text, loaded replay files are validated), dependencies, and keeping secrets and personal data out of the repository. This document is rewritten at M3.
+Rewritten at M3 for the design that DL-24 and DL-26 left: no model, no API key, no server. BrownOut is a set of static files. It has no accounts, stores no personal data and talks to nothing.
 
-BrownOut has no accounts and stores no personal data, so the things worth protecting are few: the API key, the author's money, the integrity of a session, and the visitor's browser.
+That leaves three things worth protecting: the visitor's browser, the supply chain the site is built from, and the repository itself.
 
 ## Assets and threats
 
 | Asset | Threat | Control |
 |---|---|---|
-| Anthropic API key | Leaks into the repository, the client bundle, logs, an export or a cassette | Key read only from the server environment. `.env` ignored by git. gitleaks in pre-commit, pre-push and CI. CI searches the built client for the key's prefix and for the variable name. The cassette recorder and exporter write only parsed outputs. |
-| Model spend | A visitor or a script runs many live turns | Public deployment runs in replay mode with no key (DL-11). In live mode: per-session and per-address rate limits (NFR-10), daily budget switch (FR-27), 600-character input cap, output token caps per call. |
-| Session integrity | One visitor reads or drives another's session | Session IDs have at least 128 bits of randomness and are the only credential. No listing endpoint. Sessions expire. |
-| Hidden scenario facts | Player extracts the ground truth through the API or the model | The API returns `PublicState` only. The interpret and narrate calls are never given the ground truth. Leak check on narrated text. |
-| Visitor's browser | Model output or a loaded replay file injects markup or script | All model and replay text is rendered as text nodes. No `dangerouslySetInnerHTML`, no Markdown rendering. Content Security Policy with no inline script and no third-party origins. Replay files are validated against a strict schema with size and length limits before use. |
-| Server | Oversized or malformed requests, dependency vulnerabilities | Body size limits, zod validation on every route, Helmet defaults, `npm audit` in CI, Dependabot. |
+| Visitor's browser | Text from a scenario, from the player, or from a loaded session file is treated as markup or script | Every string is rendered as a text node by React. No `dangerouslySetInnerHTML`, no Markdown rendering, no `eval`. A Content Security Policy that allows only the site's own files (below). Session files are validated before anything is drawn from them (M4). |
+| Visitor's privacy | What the player types is sent somewhere | Nothing is sent. The policy sets `connect-src 'none'`, a unit test fails if any file under `src` uses a network API, and a browser test counts requests during a session and expects none after the page has loaded. |
+| A saved session | A changed or damaged save in the tab's storage breaks the page | The save is read through a version check and shape checks, and is discarded if either fails. It lives in `sessionStorage`, so it ends with the tab. |
+| Hidden scenario facts | A player reads the cause from the page source | Accepted. The scenario ships to the browser, so a determined player can read it. This is a single-player game with no leaderboard; the only person spoiled is the one who looked. |
+| The built site | A dependency with a known vulnerability, or a tampered one | `npm ci` from a lockfile, `npm audit --omit=dev` at high and above on every push, Dependabot, GitHub Actions pinned to commit SHAs, tool versions pinned in `tools/versions.json`. |
+| The repository | A secret, a personal detail or a local path is committed | gitleaks on staged changes and on the whole history, the tracked-file check, and the rules below. |
 
-## The 3D room
+## Content Security Policy
+
+Added to the page at build time by `vite.config.ts`:
+
+```
+default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self';
+img-src 'self' data:; connect-src 'none'; object-src 'none';
+base-uri 'none'; form-action 'none'
+```
+
+- No inline script and no inline style. No `unsafe-inline`, no `unsafe-eval`, no other origin.
+- It is not applied by the development server, which injects an inline script for hot reload. The browser tests run against the built site, so they run under the policy, and one test reads the policy from the page.
+- The policy is a `meta` element because static hosting may not let the site set response headers. Two directives cannot be set this way (`frame-ancestors` and `report-uri`). If the host at M6 allows headers, move the policy there and add `frame-ancestors 'none'`.
+
+### The 3D room (stage B)
 
 - The room loads nothing from other origins. Geometry is built in code, fonts are self-hosted and sounds are generated (NFR-15).
-- Text drawn in the scene comes from the same validated public state as the panels, and is drawn as glyphs, never interpreted.
-- Content Security Policy: the in-scene text helper may need a worker created from a blob URL. If it does, allow `worker-src 'self' blob:` and nothing wider. No `unsafe-eval`. Confirm what is needed in the M3 stage B spike and record the final policy here.
+- Text drawn in the scene comes from the same state as the panels, and is drawn as glyphs, never interpreted.
+- The in-scene text helper may need a worker created from a blob URL, and HTML panels anchored to objects may need inline styles for their position. If so, allow `worker-src 'self' blob:` and `style-src-attr 'unsafe-inline'` and nothing wider. Confirm in the stage B spike and record the final policy here.
 - The debug description of the scene used by browser tests is compiled out of production builds.
 
-## Prompt injection
+## Typed input
 
-The action box accepts free text that is sent to a model, so injection attempts are expected.
+The decision box accepts free text. Nothing interprets it as instructions: the matcher compares its words with the labels and example phrasings of the situation and returns ids from the situation's own lists, which the engine checks again.
 
-What a successful injection could do is limited by design:
-
-- The interpret call can only return IDs from the scenario's fixed lists, plus short strings. The engine re-checks every ID. It cannot grant a result, change a metric or end the session.
-- The narrate call does not receive the player's raw text. It receives facts from the engine and, where a stakeholder quotes the player, an exact quoted string marked as a quote.
-- The debrief call receives the player's text only as quoted data inside the event log.
-- No model output is executed, used as a file path or URL, or rendered as markup.
-
-The worst realistic outcome is that the model writes something out of character in one message. The numeric guard and leak check catch the cases that would affect fairness.
-
-Test cases for M2 include: instructions to ignore rules, requests to reveal the cause, text that imitates the prompt's own delimiters, very long input, and input in another language.
+- Input is cut at 600 characters.
+- Nonsense, very long text and instruction-style text can cost at most one minute of game time and change nothing else. This is tested in M2.
+- Patterns built from words use authored words only, each one escaped. Typed text is only ever the string being searched.
 
 ## Content
 
 - Scenarios are about responding to incidents. They contain no working attack steps (authoring rule 11).
-- All names are fictional (authoring rule 10).
-- If the model declines a request, the turn uses fallback text. Declines are counted per scenario so that wording which triggers them can be fixed.
-- Player text is not moderated beyond the length cap, because it is shown only to the player who typed it. It is not stored after the session expires unless the player exports it.
+- All companies, people and events are fictional (authoring rule 10).
+- Player text is not moderated beyond the length cap, because it is shown only to the player who typed it.
 
 ## Privacy
 
 - No accounts, no email, no names.
-- No analytics and no third-party scripts or fonts. Fonts are self-hosted.
-- The rate limiter keeps network addresses in memory only, for the length of its window.
-- Production logs contain call metadata (timings, token counts, guard results) and no prompt or player text.
-- Live play sends the player's text to the Anthropic API. The start screen says so in one sentence before a live session begins.
+- No analytics, no cookies, and no third-party scripts or fonts. Fonts are self-hosted.
+- The page sets `referrer` to `no-referrer`.
+- A session is kept in the tab's `sessionStorage` so a reload does not lose it. It is removed when the player leaves the session or closes the tab.
 
 ## Secrets rules for this repository
 
 - No secret-shaped string in code, tests, fixtures or documents, including obviously fake ones. Tests that need one build it at runtime from parts.
-- `.env.example` has empty values.
+- There is no `.env` file because nothing reads one. Env files stay ignored by git in case one is ever created.
 - Before the first push and before any release: gitleaks over the full history.
 
 ## Checks before every commit and push

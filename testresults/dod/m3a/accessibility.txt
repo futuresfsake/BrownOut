@@ -1,0 +1,11 @@
+
+Running 6 tests using 6 workers
+
+  ok 1 [chromium] › e2e\a11y.spec.ts:24:5 › accessibility at 1440 px › start and briefing (1.2s)
+  ok 2 [chromium] › e2e\a11y.spec.ts:24:5 › accessibility at 375 px › start and briefing (1.8s)
+  ok 4 [chromium] › e2e\a11y.spec.ts:43:5 › accessibility at 1440 px › play: severe, the end confirmation, the ending and the debrief (2.7s)
+  ok 5 [chromium] › e2e\a11y.spec.ts:31:5 › accessibility at 375 px › play: opening, a question, an unanswered thread and an open thread (2.9s)
+  ok 3 [chromium] › e2e\a11y.spec.ts:31:5 › accessibility at 1440 px › play: opening, a question, an unanswered thread and an open thread (2.9s)
+  ok 6 [chromium] › e2e\a11y.spec.ts:43:5 › accessibility at 375 px › play: severe, the end confirmation, the ending and the debrief (3.0s)
+
+  6 passed (5.2s)

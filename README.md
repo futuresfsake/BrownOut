@@ -4,7 +4,7 @@ A crisis war-room simulator. You are the person in charge of a company incident.
 
 It uses no AI service and no API key. Everything runs on your own machine, and it costs nothing to play.
 
-> **Status: milestones M0, M1 and M2 are built.** The simulation engine, the first situation (Dial Tone) and free-text play all work, in a terminal. The web interface with its 3D room (M3) and the debrief screen (M4) are not built yet. Nine more situations follow in M5. See [docs/01-product/milestones.md](docs/01-product/milestones.md).
+> **Status: milestones M0, M1, M2 and the first half of M3 are built.** The simulation engine, the first situation (Dial Tone) and free-text play all work, in a terminal and in a browser as a flat page. The 3D room (M3 stage B), session export and replay (M4) are not built yet. Nine more situations follow in M5. See [docs/01-product/milestones.md](docs/01-product/milestones.md).
 
 ## Getting started
 
@@ -14,12 +14,20 @@ Needs Node 22 or newer and [gitleaks](https://github.com/gitleaks/gitleaks) on y
 npm ci                  # installs dependencies and points git at .githooks
 npm run tools:semgrep   # installs the pinned semgrep into .tools/
 npm test
-npm run play                        # play Dial Tone in the terminal by typing
+npm run dev                         # play Dial Tone in the browser, at localhost:5173
+npm run play                        # or play it in the terminal
 npm run play -- --auto ideal        # watch a scripted session and read the debrief
 npm run validate:scenarios          # prove each situation is solvable and fair
 ```
 
-While playing, type what you would do or say. `?` lists everything you could do, and `@cto your message` replies to someone directly.
+In the browser, type what you would do in the box at the bottom, or open a thread in the inbox and reply there. `/` jumps to the box, `Space` pauses, `Esc` closes a thread. In the terminal, `?` lists everything you could do, and `@cto your message` replies to someone directly.
+
+The browser tests drive the built site. They need Chromium once:
+
+```
+npx playwright install chromium
+npm run e2e                         # builds, then plays the game in a real browser
+```
 
 Every commit runs the secrets scan, lint, type-check and tests. Every push also runs static analysis, a dependency audit and a scan of the whole history. A check whose tool is missing fails and says which tool; it never passes silently. Details are in [workflows](docs/07-process/workflows.md).
 
@@ -52,9 +60,9 @@ They are built in waves of ten. One is playable today.
 
 ## The room
 
-The web version (not built yet) is played from a desk in a 3D operations room. The wall board shows the numbers, the phone lights up when the CTO writes, the television comes on when the press publishes, and the ceiling lights sag as the incident gets worse. Look at an object and its contents open beside it as an ordinary readable panel. The box you type in never leaves the screen.
+The web version will be played from a desk in a 3D operations room (not built yet). The wall board shows the numbers, the phone lights up when the CTO writes, the television comes on when the press publishes, and the ceiling lights sag as the incident gets worse. Look at an object and its contents open beside it as an ordinary readable panel. The box you type in never leaves the screen.
 
-The same game will run as a flat page for devices or people that the 3D room does not suit. See the [UI design](docs/03-design/ui-design.md).
+The same game runs today as a flat page, laid out like a duty logbook: the board, the log and the inbox side by side, or as three tabs on a phone. It stays as an equal alternative for devices or people that the 3D room does not suit. See the [UI design](docs/03-design/ui-design.md).
 
 ## How it works
 
@@ -71,10 +79,10 @@ Details: [local play](docs/03-design/local-play.md), [simulation engine](docs/03
 |---|---|
 | Language | TypeScript, Node 22 |
 | Engine and matcher | Plain TypeScript with no runtime dependencies beyond zod |
-| Interface (planned) | React with Vite, and a 3D room built with three.js, with a flat view as an equal alternative |
+| Interface | React with Vite. Flat view is built; the 3D room, with three.js, is next |
 | Server | None. The whole game runs in the browser and ships as static files |
 | AI services | None |
-| Tests | Vitest, with Playwright planned for the browser |
+| Tests | Vitest for the engine, matcher and interface logic. Playwright with axe for the built site |
 
 Reasons are in the [decision log](docs/00-overview/decision-log.md).
 

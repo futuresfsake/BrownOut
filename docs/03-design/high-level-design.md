@@ -103,20 +103,18 @@ With no API key the server starts in replay mode.
 src/
   engine/        state, clock, rules, scoring. No I/O.
   scenarios/     one folder per scenario: data, fallback copy, accuracy set
-  pipeline/      turn pipeline, guards, prompt builders
-  model/         Claude client wrapper, cassette player and recorder, usage log
-  server/        Express app, routes, session store, rate limits
+  matcher/       reads typed text against the situation's options. No I/O.
+  game/          one turn: the matcher reads, the engine resolves
+  cli/           the terminal runner
   client/
-    app/         routes, session hook, turn stream reader, idle clock
-    panels/      board, log, inbox, press, decision box, status strip (HTML)
-    flat/        the flat view: the panels laid out as one page
-    room/        the 3D view: scene, objects, stations, lights (loaded separately)
-    signals/     pure functions from public state to what the room shows
-  shared/        zod schemas and types used by server and client
-tools/           scripts called by hooks and CI, scenario validator, terminal runner
-tests/           unit, integration, scripted playthroughs
-e2e/             Playwright
-cassettes/       recorded sessions
+    app/         pure functions from the session to what the panels show; saving
+    panels/      board, log, inbox with its press group, decision box (HTML)
+    screens/     start, briefing, play (the flat view) and debrief
+    room/        the 3D view: scene, objects, stations, lights (stage B, loaded separately)
+    signals/     pure functions from the session to what the room shows (stage B)
+tools/           scripts called by hooks and CI, scenario validator
+tests/           unit tests, scripted playthroughs, a whole typed session
+e2e/             Playwright, against the built site
 testresults/dod/ evidence per milestone
 .githooks/       pre-commit, pre-push
 ```
