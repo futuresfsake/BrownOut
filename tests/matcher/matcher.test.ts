@@ -162,6 +162,36 @@ describe("messages", () => {
     ]);
   });
 
+  it("takes the stance of a statement from its own sentence, not from the rest of the message", () => {
+    const stance = (text: string, thread: string) => {
+      const i = acted(at(text, thread)).intents[0];
+      return i?.kind === "communicate"
+        ? (i.claims ?? []).map((c) => `${c.topic}:${c.stance}`).sort()
+        : [];
+    };
+    // "working" in the second sentence used to turn the first into a denial.
+    expect(
+      stance(
+        "Outage in two regions, we know the cause, fix under way. Tell customers we are working on it.",
+        "support",
+      ),
+    ).toEqual(["cause-is-cert:asserts"]);
+    expect(stance("The status page is fine. Customer data was exposed.", "counsel")).toEqual([
+      "data-exposed:asserts",
+    ]);
+    expect(stance("We found the cause. No customer data was exposed.", "counsel")).toEqual([
+      "cause-is-cert:asserts",
+      "data-exposed:denies",
+    ]);
+    // A hedge anywhere still softens the whole message.
+    expect(
+      stance(
+        "No customer data was exposed. I will confirm after the logs are reviewed.",
+        "counsel",
+      ),
+    ).toEqual(["data-exposed:uncertain"]);
+  });
+
   it("never treats a question as a statement", () => {
     const i = acted(at("Was customer data exposed?", "counsel")).intents[0];
     expect(i?.kind === "communicate" && i.claims).toBeUndefined();

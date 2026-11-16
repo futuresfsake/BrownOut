@@ -59,10 +59,9 @@ GitHub Actions, on every pull request and on `main`:
 4. Scenario validation.
 5. gitleaks and semgrep.
 6. `npm audit --omit=dev`.
-7. Build, then search the client bundle for the API key variable name and key prefix.
-8. Browser tests in replay mode.
+7. In a second job: build the site, then run the browser tests against the built files (`npm run e2e`).
 
-CI has no API key. Nothing in CI calls the model.
+There is no key and no model, so CI needs no secret.
 
 ## Evidence
 
@@ -71,7 +70,8 @@ testresults/dod/
   m0/  hooks-blocked-secret.txt  ci-run.txt
   m1/  tests.txt  coverage.txt  validator.txt  determinism.txt
   m2/  spike-latency-cost.md  accuracy.txt  guard-failures.txt
-  m3/  screenshots/  accessibility.txt
+  m3a/ screens/  browser-tests.txt  accessibility.txt  tests.txt  coverage.txt  security.txt
+  m3b/ screens/  frame-rates.txt
   ...
 ```
 
@@ -92,6 +92,6 @@ Each run of the hook and pipeline scripts appends one line to `run-log.jsonl` at
 At M6 only, and only on the owner's instruction:
 
 1. Full-history secrets scan and a check of every tracked file for local paths and personal data.
-2. Build in replay mode and run the browser tests against the build.
+2. Build and run the browser tests against the build.
 3. Deploy with no secret configured.
 4. Open the public URL and replay the bundled session end to end.

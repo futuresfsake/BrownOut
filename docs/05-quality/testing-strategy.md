@@ -14,7 +14,8 @@ The design puts everything that must be exact into code that can be tested witho
 | Pipeline integration | Full turns through interpret, resolve and narrate using cassettes and failing stubs | None | Every commit |
 | API integration | Routes, validation, limits, 409 on overlapping turns, replay mode with no key | None | Every commit |
 | Signal tests | The pure mapping from public state to room description: light level, lamps, wall board, television | None | Every commit |
-| Browser tests, flat view | Start to debrief in replay mode, keyboard-only play, phone layout, accessibility scan | None | Every push |
+| Interface logic | The pure functions between the engine and the panels (`src/client/app`): the log feed, the board, threads, saving and restoring, and a whole typed session to the resolved ending | None | Every commit |
+| Browser tests, flat view | Against the built site with a fixed seed: briefing to the resolved ending by typing, keyboard-only play, phone layout at 375 and 360 px, accessibility scan, the idle clock with a fake timer, a reload, and a count of network requests | None | Every pull request, in CI. Locally with `npm run e2e` |
 | Browser tests, 3D view | The room loads and draws something, each station opens its panel, switching views keeps state, WebGL off falls back to flat view, no frames drawn while idle | None | Every push |
 | 3D visual and performance check | Screenshots of every station at each light level, frame-rate readings on two reference devices | None | By hand at M3 stage B and M6 |
 | Interpreter accuracy | Labelled phrasings per scenario mapped to the expected intent | Live | On demand and before a release |

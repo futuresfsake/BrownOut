@@ -50,8 +50,22 @@ export default tseslint.config(
     // text: an intent is checked against the scenario's own ids before the engine uses it, and the
     // validator checks every id inside the scenario. The rule cannot see that, so it flags every
     // lookup. Writes into records that hold system ids are additionally guarded with Object.hasOwn.
-    files: ["src/**/*.ts", "tests/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}", "tests/**/*.ts", "e2e/**/*.ts"],
     rules: { "security/detect-object-injection": "off" },
+  },
+  {
+    // The interface runs in a browser.
+    files: ["src/client/**/*.{ts,tsx}"],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
+    // Browser tests write screenshots into the evidence folder by name, and find buttons by the
+    // names of people in the scenario.
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "security/detect-non-literal-fs-filename": "off",
+      "security/detect-non-literal-regexp": "off",
+    },
   },
   {
     // The matcher builds two patterns from words: people's names and aliases, and synonym lists.

@@ -132,6 +132,8 @@ Contrast ratios for panel text, computed with the WCAG formula on 2026-11-15:
 
 All panel text passes AA on all three paper tones. In-scene text is `ink` on a self-lit `paper-0` surface, so its contrast does not change with the room light. Re-measure both in the browser at M3; the numbers above come from the hex values, not from rendered pixels.
 
+Measured at M3 stage A (2026-11-16): the automated scan's colour-contrast rule, which reads rendered colours, passes on every screen and state the browser tests visit in flat view, including the page at severity 2. The result is in `testresults/dod/m3a/accessibility.txt`. In-scene text is measured in stage B.
+
 ## Type scale
 
 | Role | Face | Size / line height |
@@ -169,6 +171,11 @@ Panels keep the duty-logbook look: a ruled page, a time in the margin of every l
 ## Flat view
 
 The whole game is also playable without the 3D room. Flat view lays the same panels out as one ruled page in three columns: board, log, inbox.
+
+- The status strip runs across the top and the decision box is docked across the bottom, under all three columns (DL-30).
+- The press is a group at the foot of the inbox, set in the serif face (DL-31).
+- Under 1024 px the columns become three tabs, Log, Inbox and Board, above the browser's edge and below the decision box. The Inbox tab carries the unanswered count.
+- At severity 2 the page turns to `paper-2` and the rule under the status strip turns to `signal`. The board also says "Severe" in words.
 
 Flat view is used when:
 
