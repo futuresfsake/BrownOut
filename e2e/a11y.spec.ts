@@ -1,6 +1,15 @@
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { makeSevere, openThread, order, toBriefing, toPlay, wait } from "./helpers.js";
+import {
+  makeSevere,
+  openThread,
+  order,
+  station,
+  toBriefing,
+  toPlay,
+  toRoom,
+  wait,
+} from "./helpers.js";
 
 /** Fails on any serious or critical finding against WCAG 2.2 A and AA. */
 async function check(page: Page, where: string) {
@@ -51,6 +60,30 @@ for (const width of [1440, 375]) {
       await page.getByRole("button", { name: "Read the debrief" }).click();
       await expect(page.getByRole("heading", { name: /^Debrief/ })).toBeVisible();
       await check(page, "debrief");
+    });
+
+    test("the room: every station, with a question and an unanswered thread", async ({ page }) => {
+      await toRoom(page);
+      await check(page, "room at the desk");
+      await wait(page, 2);
+      await order(page, "restart");
+      for (const name of ["Log", "Inbox", "Board", "Press"] as const) {
+        await station(page, name);
+        await check(page, `room at ${name}`);
+      }
+      await openThread(page, "cto");
+      await check(page, "room with a thread open");
+    });
+
+    test("the room: severe, paused and with the keys listed", async ({ page }) => {
+      await toRoom(page);
+      await makeSevere(page);
+      await wait(page, 2);
+      await station(page, "Press");
+      await check(page, "room when severe, at the television");
+      await page.getByRole("button", { name: "Pause", exact: true }).click();
+      await page.keyboard.press("?");
+      await check(page, "room paused with the keys listed");
     });
   });
 }

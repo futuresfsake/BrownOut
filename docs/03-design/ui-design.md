@@ -69,9 +69,10 @@ People are not modelled. Stakeholders exist as the devices they reach you throug
 | 2 | Log | Close on the logbook | Log |
 | 3 | Inbox | Close on the phone and desk monitor | Inbox and the open thread |
 | 4 | Board | Close on the wall board | Board details |
-| 5 | Press | Close on the television | Press items |
+| 5 | Press | Close on the television | Press threads (DL-38) |
 
 - Clicking or tapping an object goes to its station. `Esc` returns to the desk.
+- The five stations are also a row of buttons under the decision box, at every width (DL-39).
 - A camera move takes 500 ms with easing. There is no free movement and no walking.
 - At the desk station the camera follows the pointer by at most two degrees, for depth.
 - **The decision box is always on screen**, docked at the bottom, at every station. So is a status strip with the clock, customers affected and the unanswered count. The player can act without moving the camera.
@@ -93,19 +94,19 @@ People are not modelled. Stakeholders exist as the devices they reach you throug
 
 | Aspect | Choice |
 |---|---|
-| Library | three.js through React Three Fiber, with only the Drei helpers that are used |
+| Library | three.js through React Three Fiber, with no helper library on top (DL-35) |
 | Geometry | Built in code from simple shapes. No downloaded model packs (DL-20). Repeated items are instanced. |
 | Shading | Toon shading in three tone steps. Surfaces are matte. |
 | Edges | Inked outlines on the main objects, in `ink` |
 | Lights | One ambient, one ceiling light driven by severity, one amber light for the strip |
 | Shadows | No real-time shadows. Contact shadows are flat dark shapes, like a card model. |
 | Effects | No post-processing in version 1 |
-| In-scene text | Signed-distance-field text in the project fonts, for the clock, the board figures and the television headline only |
+| In-scene text | Drawn on a 2D canvas in the project fonts and used as a texture (DL-36), for the clock, the wall board, the television headline, the count on the desk monitor and the name on the phone only |
 | Camera | Perspective, 40 degree field of view for a model-like look |
 | Rendering | On demand: a frame is drawn only when something changes |
 | Pixel ratio | Capped at 2 on desktop and 1.5 on phones |
 
-To confirm at the start of M3: that the in-scene text helper accepts the font files Fontsource ships, and what the content security policy needs for it (see security-overview.md).
+Settled at the stage B spike: the usual in-scene text helper starts a worker from a blob URL and fetches the font file itself, and the content security policy allows neither. Text is drawn on a canvas instead, in the fonts the page has already loaded, and the policy is unchanged (DL-36, security-overview.md).
 
 ## Palette
 
@@ -190,7 +191,7 @@ Flat view is not a degraded mode. Every feature, state and shortcut works in it,
 
 Designed on its own terms.
 
-- Portrait. The room fills the top 45 percent of the screen at the desk station, framed tighter. The panel for the current station fills the rest as a sheet.
+- Portrait. The room fills the top 45 percent of the screen, framed tighter. The panel for the current station fills the rest as a sheet. At the desk station, which has no panel of its own, the sheet is the log (DL-40).
 - Swipe left and right on the room, or use the five station buttons, to change station.
 - The status strip is at the top. The decision box is docked at the bottom above the keyboard.
 - Fewer objects are drawn: no pointer parallax, no instanced clutter, pixel ratio capped at 1.5.
@@ -230,7 +231,7 @@ While a turn runs, the log shows the action at once with "reading…" under it, 
 
 ## Sound
 
-Optional, with a mute control in the status strip. Sound starts only after the player presses Start.
+Optional and off until the player presses "Turn sound on" in the status strip (DL-41). The same button turns it off.
 
 | Sound | When |
 |---|---|
@@ -239,7 +240,7 @@ Optional, with a mute control in the status strip. Sound starts only after the p
 | Room hum, dropping in pitch | Severity rises |
 | Soft click | A task finishes |
 
-All sounds are generated in code with the Web Audio API. There are no audio files and no speech. Every sound has a visual equivalent, so muting loses no information. Whether sound is on by default is O-08.
+All sounds are generated in code with the Web Audio API. There are no audio files and no speech. Every sound has a visual equivalent, so muting loses no information.
 
 ## Performance targets
 
@@ -255,12 +256,25 @@ Targets to measure at M3, not measurements.
 | Idle cost | No frames drawn when nothing changes |
 | Start screen | Interactive before the 3D chunk has loaded |
 
+Measured at M3 stage B. The readings and how to read them are in `testresults/dod/m3b/frame-rates.txt`. What is still missing is limit L-13.
+
+| Measure | Reading |
+|---|---|
+| Frame rate, laptop | 60 while the camera moves, on a laptop with a separate graphics card. Not yet read on integrated graphics. |
+| Frame rate, phone | Not yet read on a phone. |
+| Triangles in view | 514 at most |
+| Draw calls | 57 at most |
+| 3D chunk, compressed | 248 KB |
+| Idle cost | No frames while nothing changes, held by a browser test |
+| Start screen | Does not request the 3D chunk, held by a browser test |
+
 ## Accessibility
 
 - Flat view gives a complete non-3D route through the game.
-- Every room object is also an HTML button in a visually hidden list, in station order, so keyboard and screen-reader users can reach each station without the pointer. Focusing one highlights the object.
+- Every station is also an HTML button in a visible row, in station order, so keyboard, screen-reader and touch users can reach each one without pointing at the scene (DL-39). Each button is described by the object it looks at. Focusing one outlines the object.
+- The room itself is hidden from screen readers and replaced by one sentence that says what it shows: the light level, the clock, the phone, the television and Mika's lamp.
 - Visible focus ring on panels: 2 px `ink`, offset 2 px. A focused room object gets a thicker outline.
-- Shortcuts: `1` to `5` for stations, `/` focuses the decision box, `Esc` returns to the desk, `Space` toggles pause when no field is focused. Listed on a help panel.
+- Shortcuts: `1` to `5` for stations, `/` focuses the decision box, `Esc` returns to the desk, `Space` toggles pause when no field is focused. Listed on a panel opened with the Keys button or `?`.
 - New messages and alerts are announced through a polite live region. A severity change uses an assertive one.
 - With `prefers-reduced-motion`: camera moves become cuts, the light change is instant, pointer parallax is off, lamps are steady and not pulsing.
 - Nothing relies on colour, light or sound alone. Unanswered has a lamp, a marker and the word.
@@ -284,6 +298,6 @@ In the room: photoreal textures, downloaded asset packs, bloom, neon, lens flare
 
 Before M3 is called done:
 
-- Screenshots of every station at each severity level, at 1440, 768 and 375 px wide, in 3D and in flat view, saved under `testresults/dod/m3/`.
-- A short screen recording of one level change and one message arriving.
-- Frame-rate readings from the two reference devices, written into the evidence folder.
+- Screenshots of every station at each severity level, at 1440, 768 and 375 px wide, in 3D and in flat view, saved under `testresults/dod/m3a/` (flat view) and `testresults/dod/m3b/` (the room).
+- A short screen recording of one level change and one message arriving: `testresults/dod/m3b/level-change-and-message.webm`.
+- Frame-rate readings from the two reference devices, written into the evidence folder. At stage B one laptop was read; see the table under Performance targets.

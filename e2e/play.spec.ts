@@ -112,9 +112,12 @@ test.describe("flat view", () => {
   });
 
   test("the idle clock moves one minute at a time, and pause stops it", async ({ page }) => {
-    await toPlay(page, "./?seed=7&tick=300");
+    await toPlay(page, "./?seed=7&tick=300&view=flat");
     const board = page.getByRole("region", { name: "Board" });
-    await expect(board).toContainText("T+2 min");
+    // The clock is read as a number: at this speed a busy machine can step past any one minute
+    // between two looks. The exact pace is held by the test with a fake timer below.
+    const minutes = async () => Number(/T\+(\d+) min/.exec(await board.innerText())?.[1]);
+    await expect.poll(minutes).toBeGreaterThanOrEqual(2);
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     await expect(board).toContainText("paused");
     const frozen = await board.locator(".clock").innerText();
@@ -221,7 +224,7 @@ test.describe("the page keeps to itself", () => {
 test.describe("the idle clock", () => {
   test("one sim minute passes every 15 real seconds by default", async ({ page }) => {
     await page.clock.install();
-    await toPlay(page, "./?seed=7");
+    await toPlay(page, "./?seed=7&view=flat");
     const board = page.getByRole("region", { name: "Board" });
     await expect(board).toContainText("T+0 min");
     await page.clock.fastForward(14_000);

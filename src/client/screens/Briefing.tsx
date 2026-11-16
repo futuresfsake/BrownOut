@@ -1,12 +1,23 @@
+import { useEffect } from "react";
 import type { Scenario } from "../../engine/schema.js";
+import { canDrawRoom, loadRoom, savedView, type View } from "../room/load.js";
 
 interface Props {
   scenario: Scenario;
+  /** A view asked for in the address bar, which wins over the saved choice. */
+  askedView: View | null;
   onStart: () => void;
   onBack: () => void;
 }
 
-export function Briefing({ scenario, onStart, onBack }: Props) {
+export function Briefing({ scenario, askedView, onStart, onBack }: Props) {
+  // The 3D code is fetched while the briefing is read, so the room is there when Start is
+  // pressed. A player who is going to open in flat view never downloads it.
+  useEffect(() => {
+    if (canDrawRoom() && (askedView ?? savedView()) !== "flat") {
+      void loadRoom().catch(() => undefined);
+    }
+  }, [askedView]);
   return (
     <main className="page">
       <p className="wordmark small">BrownOut</p>

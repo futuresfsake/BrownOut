@@ -3,7 +3,10 @@ import { dialTone } from "../src/scenarios/dial-tone/scenario.js";
 import { SEED, type TypedStep } from "../tests/client/typed-play.js";
 
 /** A fixed seed, and an idle clock so slow that it never ticks during a test. */
-export const GAME_URL = `./?seed=${SEED}&tick=600000`;
+export const GAME_URL = `./?seed=${SEED}&tick=600000&view=flat`;
+
+/** The same, opening in the 3D room. */
+export const ROOM_URL = `./?seed=${SEED}&tick=600000&view=room`;
 
 export const nameOf = (id: string): string =>
   dialTone.stakeholders.find((s) => s.id === id)?.name ?? id;
@@ -19,6 +22,47 @@ export async function toPlay(page: Page, url = GAME_URL) {
   await toBriefing(page, url);
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await expect(page.getByLabel("What do you do?")).toBeVisible();
+}
+
+/** Opens the play screen in the 3D room and waits until the room has drawn. */
+export async function toRoom(page: Page, url = ROOM_URL) {
+  await toBriefing(page, url);
+  await page.getByRole("button", { name: "Start", exact: true }).click();
+  await expect(page.locator(".room")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".room canvas")).toBeVisible();
+  // The objects' text is drawn again once the fonts are in, which is a frame of its own.
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  await settled(page);
+}
+
+export const frames = async (page: Page): Promise<number> =>
+  Number(await page.locator(".room").getAttribute("data-frames"));
+
+/** Waits until the room has stopped drawing: a camera move or a light change has finished. */
+export async function settled(page: Page) {
+  // Three looks in a row with the same count. On a busy machine one quiet gap can fall in the
+  // middle of a camera move, so two looks are not enough.
+  let last = -1;
+  let same = 0;
+  for (let n = 0; n < 60; n++) {
+    const now = await frames(page);
+    same = now > 0 && now === last ? same + 1 : 0;
+    if (same >= 2) return;
+    last = now;
+    await page.waitForTimeout(150);
+  }
+  throw new Error("the room never stopped drawing");
+}
+
+/** Goes to a station with its HTML button, the way a keyboard or screen-reader user does. */
+export async function station(page: Page, label: "Desk" | "Log" | "Inbox" | "Board" | "Press") {
+  await page
+    .getByRole("navigation", { name: "Stations" })
+    .getByRole("button", { name: new RegExp(`^([1-5] )?${label}`) })
+    .click();
+  await settled(page);
 }
 
 /** On narrow screens the panels are tabs. On wide screens there are no tabs to press. */
@@ -54,11 +98,20 @@ export async function order(page: Page, text: string) {
 }
 
 export async function openThread(page: Page, threadId: string) {
-  await showPanel(page, "Inbox");
+  // In the room a thread is read at the phone, or at the television if it is the press.
+  const stations = page.getByRole("navigation", { name: "Stations" });
+  if (await stations.isVisible()) {
+    const press = dialTone.stakeholders.find((s) => s.id === threadId)?.channel === "press";
+    await stations
+      .getByRole("button", { name: press ? /^([1-5] )?Press/ : /^([1-5] )?Inbox/ })
+      .click();
+  } else {
+    await showPanel(page, "Inbox");
+  }
   const back = page.getByRole("button", { name: "Back to inbox" });
   if (await back.isVisible()) await back.click();
   await page
-    .getByRole("region", { name: "Inbox" })
+    .locator(".col-inbox")
     .getByRole("button", { name: new RegExp(`^${nameOf(threadId)}`) })
     .click();
   await expect(page.getByRole("heading", { name: nameOf(threadId) })).toBeVisible();

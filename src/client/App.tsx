@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { findScenario, scenarios } from "../scenarios/index.js";
 import { boardView, deserialise, newGame, serialise, threadViews, type Game } from "./app/game.js";
+import type { View } from "./room/load.js";
 import { Briefing } from "./screens/Briefing.js";
 import { Debrief } from "./screens/Debrief.js";
 import { Play } from "./screens/Play.js";
@@ -14,6 +15,12 @@ function param(name: string): number | undefined {
   const raw = new URLSearchParams(window.location.search).get(name);
   if (raw === null || !/^\d{1,9}$/.test(raw)) return undefined;
   return Number(raw);
+}
+
+/** ?view=flat or ?view=room opens the play screen in that view. Anything else is ignored. */
+function askedView(): View | null {
+  const raw = new URLSearchParams(window.location.search).get("view");
+  return raw === "flat" || raw === "room" ? raw : null;
 }
 
 function loadSaved(): Game | null {
@@ -76,6 +83,7 @@ export function App() {
         game={game}
         act={act}
         tickMs={tickMs}
+        askedView={askedView()}
         onDebrief={() => setScreen("debrief")}
         onQuit={leave}
       />
@@ -94,7 +102,12 @@ export function App() {
   }
   if (screen === "briefing") {
     return (
-      <Briefing scenario={scenario} onStart={() => begin()} onBack={() => setScreen("start")} />
+      <Briefing
+        scenario={scenario}
+        askedView={askedView()}
+        onStart={() => begin()}
+        onBack={() => setScreen("start")}
+      />
     );
   }
   return (

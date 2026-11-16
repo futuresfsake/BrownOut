@@ -11,6 +11,7 @@ import {
   order,
   playSteps,
   showPanel,
+  GAME_URL,
   toBriefing,
   wait,
 } from "./helpers.js";
@@ -39,7 +40,7 @@ for (const size of SIZES) {
     };
 
     test("start, briefing and the opening", async ({ page }) => {
-      await page.goto("./?seed=7&tick=600000");
+      await page.goto(GAME_URL);
       await shot(page, "01-start");
       await toBriefing(page);
       await shot(page, "02-briefing");

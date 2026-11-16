@@ -1,0 +1,39 @@
+Frame-rate readings for the 3D room
+===================================
+
+Taken by e2e/measure.spec.ts against the built site, with the camera moving between
+stations for the whole of each reading. The room draws nothing when it is still.
+
+Processor: 13th Gen Intel(R) Core(TM) i5-13450HX
+Drawn by:  ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 6GB Laptop GPU (0x000025EC) Direct3D11 vs_5_0 ps_5_0, D3D11)
+
+laptop, incident running
+  window 1440 x 900, device pixel ratio 1.0
+  479 frames in 8.0 s
+  frames a second: average 60, median 60, 99 in 100 above 56
+  slowest frame 19.1 ms
+  last frame: 57 draw calls, 514 triangles
+
+laptop, severe
+  window 1440 x 900, device pixel ratio 1.0
+  481 frames in 8.0 s
+  frames a second: average 60, median 60, 99 in 100 above 56
+  slowest frame 18.6 ms
+  last frame: 57 draw calls, 514 triangles
+
+phone layout on this machine, severe
+  window 375 x 740, device pixel ratio 3.0
+  481 frames in 8.0 s
+  frames a second: average 60, median 60, 99 in 100 above 56
+  slowest frame 18.2 ms
+  last frame: 57 draw calls, 514 triangles
+
+How to read this
+  The targets in docs/03-design/ui-design.md name two devices: a mid-range laptop with
+  integrated graphics (60 frames a second while the camera moves) and a mid-range phone
+  (30 or more). A reading counts toward a target only if the line 'Drawn by' above names
+  such a device. A reading drawn by a separate graphics card says the room is not slow in
+  itself; it does not say the target is met.
+  The phone-layout reading is not a phone. It is this machine at a phone's size and pixel
+  density. The room draws at a pixel ratio of at most 1.5 on a narrow screen whatever the
+  device reports. No reading in this file comes from a phone.

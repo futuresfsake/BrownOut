@@ -33,7 +33,9 @@ const contentSecurityPolicy = (): Plugin => ({
 export default defineConfig({
   base: "./",
   plugins: [react(), contentSecurityPolicy()],
-  build: { outDir: "dist", sourcemap: false },
+  // The 3D room is one large chunk on purpose: it is three.js, fetched during the briefing. Its
+  // size is held under 300 KB compressed by a browser test, so the general warning is raised.
+  build: { outDir: "dist", sourcemap: false, chunkSizeWarningLimit: 1100 },
   server: { port: 5173 },
   preview: { port: 4173, strictPort: true },
 });
