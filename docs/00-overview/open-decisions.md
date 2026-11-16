@@ -43,7 +43,7 @@ These are accepted for version 1 and should be stated in the README once the app
 |---|---|
 | L-01 | Creativity is bounded by the authored scenario. An action that matches no authored investigation or mitigation costs time and returns an inconclusive result. |
 | L-02 | One player. No team roles, no handover between shifts. |
-| L-03 | Sessions are lost when the server restarts, unless the player exported the log. |
+| L-03 | A session lives in the browser tab and ends with it, unless the player saved it to a file from the debrief. |
 | L-04 | Stakeholders do not talk to each other on screen. Their coordination is authored into beats. |
 | L-05 | English only. |
 | L-06 | The score rewards the authored ideal path. A valid unconventional response can score lower than it deserves. The debrief says so when the player used unmatched actions. |

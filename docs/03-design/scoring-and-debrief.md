@@ -1,6 +1,6 @@
 # Scoring and debrief
 
-The engine computes the score from the event log. The same log always gives the same score. The model explains the score; it does not set it (DL-09).
+The engine computes the score from the event log. The same log always gives the same score. The debrief is assembled from the score lines and the situation's authored lessons; no model writes any of it (DL-24, DL-27).
 
 ## Dimensions
 
@@ -85,27 +85,43 @@ interface ScoreLine {
 }
 ```
 
-The debrief screen shows these lines under each dimension. Selecting one scrolls the timeline to the event.
+The debrief screen shows these lines under each dimension. Selecting one goes to the event on the timeline.
+
+A line that sums up the whole session, such as the share of messages answered in time, has no single event behind it. It is measured when the session ends, so it points at the session's end (DL-48). Every line can then be followed to a moment in the log (FR-26).
 
 ## Debrief screen
 
-1. **Header.** Scenario, ending, overall score and label, session length in sim and real minutes, the seed.
-2. **Five dimensions.** Score and the evidence lines for each.
-3. **Timeline.** The whole session on one axis with customers affected drawn as a line. Marked on it: the first sight of the root cause, each mitigation, each kept or broken commitment, each claim, each obligation deadline.
-4. **Went well and missed.** Written by the model, each point linked to its events.
-5. **A stronger response.** The alternative timeline, five to eight steps with a reason for each, written by the model from the authored ideal path and adapted to what the player actually did.
-6. **One thing.** The single change that would have mattered most.
-7. **Actions.** Play again with the same seed, play again with a new one, export the session.
+1. **Header.** Situation, overall score and label, one sentence on how it ended, then the ending, the length in game minutes with its clock times, and the seed. Real time is not recorded (DL-50).
+2. **Five dimensions.** Score and the evidence lines for each. Each line is a link to its moment on the timeline.
+3. **Timeline.** The whole session on one axis with customers affected drawn as a line, and under it the same moments as a list in words (DL-48). Marked: the first sight of the root cause, each change made (a harmful one is marked as such), each promise kept or broken, each statement and any that turned out wrong, each duty met, late or missed, the end, and any other event the debrief points at.
+4. **Went well and missed.** The situation's authored lessons whose conditions this session met, each linked to its event.
+5. **One thing.** The largest single loss of points, linked to its event.
+6. **A stronger response, beside yours.** Five to eight steps of the ideal path, each with its time and an authored reason, and beside each one when the player did the same thing or that they did not (DL-49).
+7. **Actions.** Play again with the same seed, play again with a new one, save the session to a file, watch it back.
 
-## Debrief rules for the model
+## Rules for debrief text
+
+These bind whoever writes a situation's lessons and the engine's score reasons.
 
 - Refer to the player as "you".
-- Be specific. "At 02:21 you restarted every auth-core node" and not "some mitigations were unhelpful".
+- Be specific. "Restarting every sign-in server made every connected phone sign in again" and not "some mitigations were unhelpful".
 - Give credit where the log supports it. A debrief that only lists faults is not accurate.
 - Do not state numbers that are not in the log.
-- When the player used actions the scenario could not match (L-01), say that the simulation could not judge them, and do not count them as mistakes.
+- An action the situation could not match (L-01) is not counted as a mistake.
 - No general advice that is not tied to an event in this session.
 
-## Fallback
+## A stronger response
 
-If the debrief call fails or fails its guards twice, the screen shows sections 1 to 3 and 7, and section 5 is built from the authored ideal path without adaptation. The player still gets a complete, correct score.
+A step of a situation's ideal path may carry a `why`: one sentence on the reason for it. The steps that have one are the stronger response, so the author chooses five to eight. A step counts as done by the player when:
+
+| Step | Done when |
+|---|---|
+| An investigation or a change | The player ordered the same one |
+| A message that carries an instruction | The player gave the same instruction |
+| A plain message | The player wrote to the same person. Messages are matched in order, so two authored messages to one person need two from the player. |
+
+The time is compared with the authored minute: within a minute is "on time", otherwise so many minutes later or sooner. Whether the player's message said the right thing is the business of the honesty and communication scores, not of this table.
+
+## Saving and watching a session
+
+The debrief can save the session as a file and play it back. The file format, the checks on opening one and the replay are in [high-level-design.md](high-level-design.md) and [security-overview.md](../04-security/security-overview.md) (DL-44 to DL-47).

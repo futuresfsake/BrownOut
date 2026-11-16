@@ -73,8 +73,12 @@ testresults/dod/
   m3a/ screens/  browser-tests.txt  accessibility.txt  tests.txt  coverage.txt  security.txt
   m3b/ screens/  level-change-and-message.webm  frame-rates.txt  browser-tests.txt
        accessibility.txt  tests.txt  coverage.txt  build.txt  security.txt
+  m4/  screens/  sample-session.json  browser-tests.txt  accessibility.txt  tests.txt
+       coverage.txt  build.txt  security.txt
   ...
 ```
+
+`npm run evidence -- m4` runs the checks and writes the text files for a milestone, with the path of the checkout removed.
 
 Evidence files are plain text or images produced by the tools, not written by hand.
 

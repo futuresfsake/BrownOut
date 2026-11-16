@@ -4,7 +4,7 @@ A crisis war-room simulator. You are the person in charge of a company incident.
 
 It uses no AI service and no API key. Everything runs on your own machine, and it costs nothing to play.
 
-> **Status: milestones M0 to M3 are built.** The simulation engine, the first situation (Dial Tone) and free-text play all work: in a terminal, and in a browser as a 3D room or as a flat page. Session export and replay (M4) are not built yet. Nine more situations follow in M5. See [docs/01-product/milestones.md](docs/01-product/milestones.md).
+> **Status: milestones M0 to M4 are built.** The simulation engine, the first situation (Dial Tone) and free-text play all work: in a terminal, and in a browser as a 3D room or as a flat page. A finished session has a debrief with a timeline, can be saved to a file, and can be watched back. Nine more situations follow in M5. See [docs/01-product/milestones.md](docs/01-product/milestones.md).
 
 ## Getting started
 
@@ -21,6 +21,8 @@ npm run validate:scenarios          # prove each situation is solvable and fair
 ```
 
 In the browser, type what you would do in the box at the bottom, or open a thread in the inbox and reply there. Click an object in the room, or press `1` to `5`, to look at it; `Esc` returns to the desk. `/` jumps to the box, `Space` pauses, and `?` lists the keys. "Flat view" in the top bar swaps the room for a plain page at any time, and nothing is lost. In the terminal, `?` lists everything you could do, and `@cto your message` replies to someone directly.
+
+To see a session without playing one, press "Watch the sample" on the start screen. After your own session, the debrief has "Save this session", which writes a small JSON file to your device, and "Watch it back". A saved file opens from the start screen. It is read in the page and sent nowhere.
 
 The browser tests drive the built site. They need Chromium once:
 

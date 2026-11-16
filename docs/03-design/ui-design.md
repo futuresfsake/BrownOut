@@ -202,11 +202,11 @@ Designed on its own terms.
 
 | Screen | Rendered as | Contents |
 |---|---|---|
-| Start | HTML | What BrownOut is in two sentences, the scenario list, mode notice if replay only |
+| Start | HTML | What BrownOut is in two sentences, the list of situations, and "Watch a session": the bundled sample, and a button to open a saved session file. A file that is refused gets one sentence saying why, in the signal colour. |
 | Briefing | HTML, with the room loading behind it | Role, situation, what you can do, Start |
 | Play | Room and panels, or flat view | See above |
-| Debrief | HTML document | See scoring-and-debrief.md. The room is not shown; this is a report to read. |
-| Replay | Room and panels, read-only | Step and play controls |
+| Debrief | HTML document | See scoring-and-debrief.md. The room is not shown; this is a report to read. The timeline is a line chart drawn in `ink` with a tick for each moment, `signal` for the ones that cost the player, and the same moments listed in words under it. |
+| Replay | The play screen, in the room or in flat view, read-only (DL-47) | A note that this is a recording. In the dock, where the decision box would be: the step number, the move that led to this step in words, and five buttons: To the start, Back, Play or Stop, Forward, To the end. The pause, wait, cancel and end controls are not shown. `Left` and `Right` step, `Space` plays or stops. |
 
 The 3D code is a separate chunk that loads while the player reads the briefing. The start screen does not wait for it.
 

@@ -28,6 +28,7 @@ import { Board } from "../panels/Board.js";
 import { DecisionBox } from "../panels/DecisionBox.js";
 import { Inbox } from "../panels/Inbox.js";
 import { Log } from "../panels/Log.js";
+import { ReplayControls } from "../panels/ReplayControls.js";
 import { canDrawRoom, loadRoom, savedView, saveView, type View } from "../room/load.js";
 import type { FrameCost } from "../room/meter.js";
 import {
@@ -53,7 +54,23 @@ interface Props {
   askedView: View | null;
   onDebrief: () => void;
   onQuit: () => void;
+  /** Set when this is a recorded session being watched. Nothing can then be changed. */
+  watching?: Watching | undefined;
 }
+
+export interface Watching {
+  /** How many of the recorded moves have been played. */
+  step: number;
+  total: number;
+  /** The move that led to this step, in words. */
+  what: string;
+  /** False when the moves no longer give the session the file says they gave. */
+  exact: boolean;
+  onStep: (step: number) => void;
+}
+
+/** How long each step stays on screen while a recording plays by itself. */
+const REPLAY_STEP_MS = 1400;
 
 const ENDINGS: Record<string, string> = {
   resolved: "The incident is resolved.",
@@ -75,6 +92,12 @@ const KEYS: readonly { keys: string; does: string; room?: true }[] = [
   { keys: "?", does: "Show or hide this list." },
 ];
 
+const REPLAY_KEYS: typeof KEYS = [
+  { keys: "Right", does: "One step forward in the recording." },
+  { keys: "Left", does: "One step back." },
+  { keys: "Space", does: "Play the recording, or stop it." },
+];
+
 const NO_3D = "This browser cannot draw the 3D room, so this is the flat view. Nothing is missing.";
 const LOST_3D =
   "The 3D room stopped drawing and did not come back, so this is the flat view. Nothing is lost.";
@@ -85,7 +108,17 @@ function firstView(asked: View | null): View {
 }
 
 /** The play screen: the 3D room with one panel beside it, or the same panels as a flat page. */
-export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit }: Props) {
+export function Play({
+  scenario,
+  game,
+  act,
+  tickMs,
+  askedView,
+  onDebrief,
+  onQuit,
+  watching,
+}: Props) {
+  const [playing, setPlaying] = useState(false);
   const [view, setView] = useState<View>(() => firstView(askedView));
   const [notice, setNotice] = useState<string | null>(() => (canDrawRoom() ? null : NO_3D));
   const [offerFlat, setOfferFlat] = useState(false);
@@ -145,13 +178,31 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
   // The idle clock: one sim minute per interval while the player is thinking. It starts again
   // from zero after each thing the player does.
   useEffect(() => {
-    if (!running || game.paused) return;
+    if (watching || !running || game.paused) return;
     const timer = window.setInterval(
       () => act((g) => control(scenario, g, { type: "tick", minutes: 1 })),
       tickMs,
     );
     return () => window.clearInterval(timer);
-  }, [running, game.paused, tickMs, scenario, act, acted]);
+  }, [watching, running, game.paused, tickMs, scenario, act, acted]);
+
+  // A recording playing by itself: one step at a time, stopping at the end.
+  const step = watching?.step ?? 0;
+  const total = watching?.total ?? 0;
+  const onStep = watching?.onStep;
+  const toStep = useCallback(
+    (to: number) => onStep?.(Math.min(total, Math.max(0, to))),
+    [onStep, total],
+  );
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= total) {
+      setPlaying(false);
+      return;
+    }
+    const timer = window.setTimeout(() => toStep(step + 1), REPLAY_STEP_MS);
+    return () => window.clearTimeout(timer);
+  }, [playing, step, total, toStep]);
 
   const did = useCallback(
     (change: (g: Game) => Game) => {
@@ -207,6 +258,14 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
         e.preventDefault();
         setTab("log");
         box.current?.focus();
+      } else if (watching) {
+        // Watching a recording: the arrows step through it and Space plays or stops it.
+        if (e.key === "ArrowRight") toStep(step + 1);
+        else if (e.key === "ArrowLeft") toStep(step - 1);
+        else if (e.key === " " && !(e.target instanceof HTMLButtonElement)) {
+          e.preventDefault();
+          setPlaying((now) => !now && step < total);
+        }
       } else if (e.key === " " && running && !(e.target instanceof HTMLButtonElement)) {
         e.preventDefault();
         act((g) => setPaused(g, !g.paused));
@@ -214,7 +273,7 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [act, running, go]);
+  }, [act, running, go, watching, toStep, step, total]);
 
   // The log keeps its place when it is hidden and shown again, by a tab, a station or a change
   // of view. If it was at the end, it stays at the end.
@@ -297,6 +356,7 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
       data-view={view}
       data-tab={tab}
       data-panel={panel ?? "none"}
+      data-mode={watching ? "replay" : "play"}
     >
       <header className="strip">
         <p className="wordmark small">BrownOut</p>
@@ -306,14 +366,16 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
           {game.paused ? " · paused" : ""}
         </p>
         <div className="strip-controls">
-          <button
-            type="button"
-            onClick={() => act((g) => setPaused(g, !g.paused))}
-            disabled={!running}
-            aria-pressed={game.paused}
-          >
-            {game.paused ? "Resume" : "Pause"}
-          </button>
+          {!watching && (
+            <button
+              type="button"
+              onClick={() => act((g) => setPaused(g, !g.paused))}
+              disabled={!running}
+              aria-pressed={game.paused}
+            >
+              {game.paused ? "Resume" : "Pause"}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => choose(inRoom ? "flat" : "room")}
@@ -322,21 +384,25 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
           >
             {inRoom ? "Flat view" : "3D view"}
           </button>
-          <button
-            type="button"
-            onClick={() => did((g) => control(scenario, g, { type: "wait" }))}
-            disabled={!running}
-          >
-            Wait
-          </button>
-          <button
-            type="button"
-            onClick={() => did((g) => control(scenario, g, { type: "cancelTask" }))}
-            disabled={!running || !session.task}
-          >
-            Cancel task
-          </button>
-          {running ? (
+          {!watching && (
+            <>
+              <button
+                type="button"
+                onClick={() => did((g) => control(scenario, g, { type: "wait" }))}
+                disabled={!running}
+              >
+                Wait
+              </button>
+              <button
+                type="button"
+                onClick={() => did((g) => control(scenario, g, { type: "cancelTask" }))}
+                disabled={!running || !session.task}
+              >
+                Cancel task
+              </button>
+            </>
+          )}
+          {running && !watching ? (
             <button type="button" onClick={() => setConfirmEnd(true)}>
               End incident
             </button>
@@ -372,12 +438,14 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
             Keys
           </h2>
           <dl>
-            {KEYS.filter((k) => inRoom || !k.room).map((k) => (
-              <div key={k.keys}>
-                <dt className="mono">{k.keys}</dt>
-                <dd>{k.does}</dd>
-              </div>
-            ))}
+            {(watching ? [...KEYS.filter((k) => k.room || k.keys === "?"), ...REPLAY_KEYS] : KEYS)
+              .filter((k) => inRoom || !k.room)
+              .map((k) => (
+                <div key={k.keys}>
+                  <dt className="mono">{k.keys}</dt>
+                  <dd>{k.does}</dd>
+                </div>
+              ))}
           </dl>
           <button type="button" onClick={() => setShowKeys(false)}>
             Close this list
@@ -426,6 +494,26 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
               Keep going
             </button>
           </div>
+        </div>
+      )}
+
+      {watching && (
+        <div className="banner banner-quiet" role="note">
+          <p>
+            You are watching a recorded session. Nothing here can be changed.
+            {watching.exact
+              ? ""
+              : " The situation has changed since this was recorded, so what you see is what the same moves give now."}
+          </p>
+        </div>
+      )}
+
+      {watching && running && step >= total && (
+        <div className="banner" role="status">
+          <p>The recording stops here, before the incident ended.</p>
+          <button type="button" className="primary" onClick={onDebrief}>
+            Read the debrief so far
+          </button>
         </div>
       )}
 
@@ -497,7 +585,7 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
           <Inbox
             threads={threads}
             openId={openThread}
-            disabled={!running}
+            disabled={!running || Boolean(watching)}
             show={panel === "press" ? "press" : panel === "inbox" ? "people" : "all"}
             onOpen={openInbox}
             onReply={(threadId, text) => did((g) => submit(scenario, g, text, threadId))}
@@ -506,14 +594,28 @@ export function Play({ scenario, game, act, tickMs, askedView, onDebrief, onQuit
       </div>
 
       <div className="dock">
-        <DecisionBox
-          pending={game.pending}
-          disabled={!running}
-          inputRef={box}
-          onSubmit={(text) => did((g) => submit(scenario, g, text))}
-          onPick={(n) => did((g) => pick(scenario, g, n))}
-          onDismiss={() => act(dismiss)}
-        />
+        {watching ? (
+          <ReplayControls
+            step={step}
+            total={total}
+            what={watching.what}
+            playing={playing}
+            onStep={(to) => {
+              setPlaying(false);
+              toStep(to);
+            }}
+            onPlaying={setPlaying}
+          />
+        ) : (
+          <DecisionBox
+            pending={game.pending}
+            disabled={!running}
+            inputRef={box}
+            onSubmit={(text) => did((g) => submit(scenario, g, text))}
+            onPick={(n) => did((g) => pick(scenario, g, n))}
+            onDismiss={() => act(dismiss)}
+          />
+        )}
       </div>
 
       {inRoom ? (
