@@ -39,7 +39,8 @@ function evidenceFor(state: SessionState, type: string, id?: string): EngineEven
   );
 }
 
-function describe(sc: Scenario, intent: Intent): string {
+/** An authored step in plain words: the label of an order, or who is told what. */
+export function describeIntent(sc: Scenario, intent: Intent): string {
   if (intent.kind === "investigate") {
     return sc.investigations.find((i) => i.id === intent.id)?.label ?? intent.id;
   }
@@ -57,6 +58,15 @@ export function buildDebrief(sc: Scenario, state: SessionState): Debrief {
   const result = score(sc, state);
   const lastEvent = state.log[state.log.length - 1];
   const fallbackIds = lastEvent ? [lastEvent.id] : [];
+
+  // A line that sums up the whole session, such as the share of messages answered in time, has
+  // no single event behind it. It is measured when the session ends, so it points there. Every
+  // line in the debrief can then be followed to a moment in the log (FR-26).
+  for (const dimension of Object.values(result.dimensions)) {
+    dimension.lines = dimension.lines.map((line) =>
+      line.eventIds.length > 0 ? line : { ...line, eventIds: fallbackIds },
+    );
+  }
 
   const wentWell: DebriefPoint[] = [];
   const missed: DebriefPoint[] = [];
@@ -103,7 +113,7 @@ export function buildDebrief(sc: Scenario, state: SessionState): Debrief {
     stronger: sc.idealPath.map((s) => ({
       atMinute: s.atMinute,
       clock: clockOf(sc, s.atMinute),
-      step: describe(sc, s.intent),
+      step: describeIntent(sc, s.intent),
     })),
     oneThing,
   };

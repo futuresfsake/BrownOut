@@ -1,0 +1,17 @@
+
+Running 12 tests using 8 workers
+
+  ok  1 [chromium] › e2e\a11y.spec.ts:34:5 › accessibility at 1440 px › start and briefing (2.1s)
+  ok  6 [chromium] › e2e\a11y.spec.ts:34:5 › accessibility at 375 px › start and briefing (3.3s)
+  ok  5 [chromium] › e2e\a11y.spec.ts:41:5 › accessibility at 375 px › play: opening, a question, an unanswered thread and an open thread (5.2s)
+  ok  7 [chromium] › e2e\a11y.spec.ts:53:5 › accessibility at 1440 px › play: severe, the end confirmation, the ending and the debrief (6.0s)
+  ok  2 [chromium] › e2e\a11y.spec.ts:41:5 › accessibility at 1440 px › play: opening, a question, an unanswered thread and an open thread (7.2s)
+  ok  8 [chromium] › e2e\a11y.spec.ts:79:5 › accessibility at 1440 px › the room: severe, paused and with the keys listed (7.3s)
+  ok  9 [chromium] › e2e\a11y.spec.ts:53:5 › accessibility at 375 px › play: severe, the end confirmation, the ending and the debrief (5.5s)
+  ok  3 [chromium] › e2e\a11y.spec.ts:90:5 › accessibility at 1440 px › a refused file, a recording being watched, and its debrief (9.3s)
+  ok 11 [chromium] › e2e\a11y.spec.ts:79:5 › accessibility at 375 px › the room: severe, paused and with the keys listed (5.5s)
+  ok  4 [chromium] › e2e\a11y.spec.ts:66:5 › accessibility at 1440 px › the room: every station, with a question and an unanswered thread (11.8s)
+  ok 12 [chromium] › e2e\a11y.spec.ts:90:5 › accessibility at 375 px › a refused file, a recording being watched, and its debrief (6.5s)
+  ok 10 [chromium] › e2e\a11y.spec.ts:66:5 › accessibility at 375 px › the room: every station, with a question and an unanswered thread (10.3s)
+
+  12 passed (16.3s)

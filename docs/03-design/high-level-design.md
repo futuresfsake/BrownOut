@@ -1,120 +1,113 @@
 # High-level design
 
-> **Updated by DL-24 and DL-26 (2026-11-16).** There is no model and no server in version 1. Where this document shows an interpret or narrate step, read "the local matcher" and "authored text". Where it shows a Node server, an HTTP API or a session store, read "the browser". The engine, the split of who decides what, and the client structure are unchanged. See [local-play.md](local-play.md). This document is rewritten when the web interface is built in M3.
+BrownOut is a static site. Everything runs in the browser: there is no server and no model, and the page fetches nothing but its own files (DL-24, DL-26). This document was rewritten at M4 to describe what is built. The earlier design, with a Node server and a language model, is in the decision log as DL-02 to DL-14.
 
 ## Parts
 
 ```mermaid
 flowchart LR
   subgraph Browser
-    UI[React client<br/>3D room, panels, flat view]
-  end
-  subgraph Server[Node server]
-    API[HTTP API<br/>Express + zod]
-    SESS[Session store<br/>in memory]
-    PIPE[Turn pipeline]
+    UI[Screens<br/>start, briefing, play, debrief]
+    APP[App functions<br/>pure]
+    GAME[Turn<br/>matcher, then engine]
+    MATCH[Matcher<br/>pure]
     ENG[Engine<br/>pure, deterministic]
-    MC[Model client]
-    CASS[Cassette store]
+    SCN[(Situations<br/>authored data)]
+    TAB[(sessionStorage)]
   end
-  SCN[(Scenario files)]
-  LLM[Claude API]
+  FILE[(Session file<br/>on the player's device)]
 
-  UI -- turn request --> API
-  API -- NDJSON stream --> UI
-  API --> PIPE
-  PIPE --> ENG
-  PIPE --> MC
-  MC -- live --> LLM
-  MC -- replay --> CASS
+  UI -- typed text, clicks --> APP
+  APP --> GAME
+  GAME --> MATCH
+  GAME --> ENG
+  MATCH --> SCN
   ENG --> SCN
-  PIPE --> SESS
+  APP -- views --> UI
+  APP <-- save and restore --> TAB
+  APP <-- save and open --> FILE
 ```
 
-| Part | Job | Knows about the model? |
+| Part | Where | Job |
 |---|---|---|
-| Engine | Holds state, resolves intents, fires beats, scores | No |
-| Scenario files | Ground truth and all authored content | No |
-| Turn pipeline | Runs interpret, resolve, narrate in order and applies the guards | Yes |
-| Model client | One place that talks to the Claude API or to a cassette | Yes |
-| Session store | Maps a session ID to its state and event log | No |
-| HTTP API | Validates input, enforces limits, streams turn events | No |
-| Client | Shows state, sends input, runs the idle clock | No |
+| Engine | `src/engine` | Holds state, resolves intents, fires beats, scores, assembles the debrief |
+| Situations | `src/scenarios` | Ground truth and every authored word |
+| Matcher | `src/matcher` | Reads typed text against the situation's own options |
+| Turn | `src/game` | One turn: the matcher reads, the engine resolves |
+| App functions | `src/client/app` | The game as the interface sees it: the log feed, the board, threads, the record of moves, session files, the timeline |
+| Screens and panels | `src/client/screens`, `src/client/panels` | Draw what the app functions return and hold what is local to a screen |
+| Room | `src/client/room`, `src/client/signals` | The 3D view of the same state |
 
-The engine imports nothing from the server, the model client or the browser. It can be run from a test or a terminal with no network.
+The engine imports nothing from the matcher, the client or the browser. It runs the same in a test, a terminal and a page.
 
 ## A turn
 
 ```mermaid
 sequenceDiagram
   participant P as Player
-  participant A as API
-  participant I as Interpret (model)
+  participant A as App functions
+  participant M as Matcher
   participant E as Engine
-  participant N as Narrate (model)
 
   P->>A: text ("pull the auth-core logs")
-  A->>I: text + allowed IDs for this scenario
-  I-->>A: intent (IDs, claims, promises)
-  A-->>P: event: intent (restated in one line)
+  A->>M: text, with the situation's options
+  M-->>A: intents, or "did you mean", or nothing matched
   A->>E: resolve(intent)
-  E-->>A: new state, events, render requests
-  A-->>P: event: resolved (board updates now)
-  A->>N: render requests, each with its facts
-  N-->>A: written items
-  A->>A: guards: schema, numbers, leaks
-  A-->>P: event: rendered (messages and findings)
+  E-->>A: new state and the events that happened
+  A-->>P: the log, the board and the inbox, drawn from the new state
 ```
 
-Three things to note:
-
-1. **Interpret cannot decide outcomes.** It returns identifiers that already exist in the scenario, plus the claims and promises it found in the text. The engine decides what those mean.
-2. **Narrate works from settled facts.** By the time it is called, the turn's outcome is fixed. Each piece of text it writes comes with the exact facts and numbers it may use.
-3. **Wait and idle ticks skip interpret.** If the engine produces no render requests, narrate is skipped too, and the turn costs nothing.
+1. **The matcher cannot decide outcomes.** It returns identifiers that already exist in the situation, with the claims and promises it found in the text. The engine decides what those mean.
+2. **A question costs nothing.** When two readings are close the matcher asks which was meant, and no time passes until the player answers (DL-25).
+3. **Everything is synchronous.** A turn is a function call. There is nothing to wait for, so there is no loading state between typing and the result.
 
 ## Who decides what
 
 | Question | Decided by |
 |---|---|
 | What time is it? How many customers are affected? | Engine |
-| Did that mitigation work? | Engine, from the scenario |
-| What does this log search reveal? | Engine, from the scenario |
+| Did that mitigation work? | Engine, from the situation |
+| What does this log search reveal? | Engine, from the situation |
 | Does the CTO message now? | Engine, from beats and conditions |
-| Was that statement to the press true? | Engine, from ground truth and the player's known facts |
-| What did the player mean by this sentence? | Model (interpret) |
-| How does the CTO phrase it, given low trust and a missed ETA? | Model (narrate) |
-| What does the news story say, given these facts? | Model (narrate) |
-| What is the score? | Engine |
-| How should the debrief explain the score? | Model (debrief), citing events |
+| Was that statement to the press true? | Engine, from ground truth and what the player knew |
+| What did the player mean by this sentence? | Matcher, or the player when it asks |
+| How does the CTO phrase it? | The situation's author, with variants chosen by trust and the seed |
+| What is the score, and what does the debrief say? | Engine, from the event log and authored lessons |
 
-## Run modes
+## Sessions, saves and recordings
 
-| Mode | Model calls | Use |
+A session is a pure function of two things: the seed and the list of moves the player made (DL-44). The app records each move as it happens: typed text, a reply in a thread, a choice from a question, a wait, idle minutes, the end.
+
+| What | Where it lives | What is in it |
 |---|---|---|
-| live | Real calls to the Claude API | Local play with a key in `.env` |
-| record | Real calls, responses saved to a cassette | Making fixtures and the demo session |
-| replay | None. Responses come from a cassette or an exported session | Public demo, browser tests, CI |
+| The game in progress | The tab's `sessionStorage` | The whole game state, so a reload costs nothing (DL-33) |
+| A saved session | A JSON file the player downloads from the debrief | The seed, the moves, a fingerprint of the result, and the event log in words for a person to read (DL-45) |
+| A bundled sample | The site's own code | A seed and moves only |
 
-With no API key the server starts in replay mode.
+Opening a saved session never draws anything from the file. The file is checked whole, then its moves are played through the same functions that typed text goes through, and the page shows what that produces. The fingerprint tells the player whether the result is the one the file recorded (DL-46).
+
+Watching a recording uses the play screen with nothing in it that can change the session: the decision box is replaced by step and play controls, and the room or the flat view shows each step (DL-47).
 
 ## Source layout
 
 ```
 src/
-  engine/        state, clock, rules, scoring. No I/O.
-  scenarios/     one folder per scenario: data, fallback copy, accuracy set
+  engine/        state, clock, rules, scoring, debrief. No I/O.
+  scenarios/     one folder per situation: data, authored text, accuracy set, playthroughs
   matcher/       reads typed text against the situation's options. No I/O.
   game/          one turn: the matcher reads, the engine resolves
   cli/           the terminal runner
   client/
-    app/         pure functions from the session to what the panels show; saving; sound
-    panels/      board, log, inbox with its press group, decision box (HTML)
-    screens/     start, briefing, play (the room or the flat view) and debrief
+    app/         pure functions: game and moves, session files, the debrief's timeline,
+                 samples, sound
+    panels/      board, log, inbox with its press group, decision box, replay controls
+    screens/     start, briefing, play (the room or the flat view; also used to watch a
+                 recording) and debrief
     room/        the 3D view. Room.tsx is the scene and is the only file that imports
                  three.js; it is loaded separately. Stations, the light fade, the frame
                  counter and the drawn textures are plain modules beside it.
     signals/     pure functions from the session to what the room shows
-tools/           scripts called by hooks and CI, scenario validator
+tools/           scripts called by hooks and CI, scenario validator, evidence
 tests/           unit tests, scripted playthroughs, a whole typed session
 e2e/             Playwright, against the built site
 testresults/dod/ evidence per milestone
@@ -125,16 +118,19 @@ testresults/dod/ evidence per milestone
 
 ```mermaid
 flowchart TD
-  PS[Public state<br/>from the turn stream] --> PAN[Panels<br/>HTML]
-  PS --> SIG[Signals<br/>pure functions]
+  G[Game<br/>session, feed, moves] --> V[Views<br/>pure functions]
+  V --> PAN[Panels<br/>HTML]
+  V --> SIG[Signals<br/>pure functions]
   SIG --> ROOM[3D room<br/>three.js]
   PAN --> FLAT[Flat view]
   PAN --> ROOM
+  G --> REV[Timeline and comparison<br/>pure functions]
+  REV --> DEB[Debrief]
 ```
 
 - The panels are the interface. They are built once and used by both views.
-- Flat view arranges the panels on a page. The 3D view places them beside objects in the room.
-- `signals/` turns public state into a small description of the room: light level, which lamps are on, what the wall board shows, whether the television is on. It has no three.js in it and is unit tested.
+- Flat view arranges the panels on a page. The 3D view places one beside the object the camera is looking at.
+- `signals/` turns the session into a small description of the room: light level, which lamps are on, what the wall board shows, whether the television is on. It has no three.js in it and is unit tested.
 - The room renders that description. It keeps no game state, so switching views or losing the graphics context loses nothing.
 - The room is a separate chunk loaded during the briefing. Flat view never loads it.
 
@@ -142,14 +138,16 @@ Details are in [ui-design.md](ui-design.md).
 
 ## Deployment
 
-One Node process serves the API and the built client. There is no database and no other service. The public demo is this process in replay mode with no secret configured (DL-11, O-02).
+A folder of static files, built by `npm run build`. Any static host will do, served from any path, because every address in the page is relative. There is no secret, no environment and nothing to keep running (O-02).
 
 ## Failure behaviour
 
 | Failure | Behaviour |
 |---|---|
-| Interpret fails or is declined | Treat the input as an unmatched action: it costs one minute and is logged as "not understood, try rephrasing". No state change beyond time. |
-| Narrate fails, is declined or fails a guard twice | Use the authored fallback text for each render request. |
-| Daily budget reached | New live turns are refused with a clear message. The session can be exported. Replay works. |
-| Server restarts | Sessions are lost. The client says so and offers to start again. |
-| Client loses connection mid-turn | The turn finishes on the server. The client fetches the session state on reconnect. |
+| Typed text matches nothing | It costs one minute, is logged as not understood, and the nearest things that could be done are offered. |
+| The browser cannot draw the 3D room, or stops being able to | The game carries on in flat view and says why. |
+| The room draws slowly | Flat view is offered. Nothing is switched without the player. |
+| Storage is blocked or the save is damaged | The game works without saving. A damaged save is dropped and the start screen opens. |
+| A session file is too large, not a session, from a newer version, or for an unknown situation | It is refused with one plain sentence. Nothing is opened. |
+| A session file's moves no longer give the result it recorded | It plays from its moves, and the page says the result differs. |
+| The page is closed mid-session | The session is gone unless it was saved to a file. A reload in the same tab restores it. |

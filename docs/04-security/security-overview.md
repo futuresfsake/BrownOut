@@ -45,11 +45,23 @@ The decision box accepts free text. Nothing interprets it as instructions: the m
 - Nonsense, very long text and instruction-style text can cost at most one minute of game time and change nothing else. This is tested in M2.
 - Patterns built from words use authored words only, each one escaped. Typed text is only ever the string being searched.
 
+## Session files
+
+A saved session is the one thing the game reads that was not built into it. A file may have been edited, or made by someone else, so it is treated as untrusted (DL-45).
+
+- **Size first.** A file over 512 KB is refused before it is read. The same limit is applied again to the text, in bytes, before it is parsed (NFR-10).
+- **Strict shape.** The parsed file is checked against a schema that allows no unknown field and bounds every number, length and count: at most 2,000 moves, 600 characters of typed text in a move, 1,000 idle minutes in one move. Anything else is refused with one fixed sentence that contains nothing from the file.
+- **Nothing is drawn from the file.** The file's moves are played through the same functions as typed text, and the page shows what that produces. The event log and the result written in the file are compared with the replay and are never displayed.
+- **Typed text in a file is typed text.** It goes through the matcher like anything typed, so the limits under "Typed input" apply to it: it can cost game time and nothing else. It is shown as text, never as markup.
+- **A mismatch is said, not hidden.** If the moves do not give the recorded result, the session still plays and the page says the result differs (DL-46).
+- **Saving sends nothing.** The file is made in the page and handed to the browser's own download. Opening reads it in the page. Browser tests count the requests around both and find none.
+- **Whoever opens a file sees what its author typed.** That is the point of sharing one. It is the only way one player's words reach another, and it happens only when a person chooses to open a file someone gave them.
+
 ## Content
 
 - Scenarios are about responding to incidents. They contain no working attack steps (authoring rule 11).
 - All companies, people and events are fictional (authoring rule 10).
-- Player text is not moderated beyond the length cap, because it is shown only to the player who typed it.
+- Player text is not moderated beyond the length cap. It is shown to the player who typed it, and to anyone they give a saved session to.
 
 ## Privacy
 

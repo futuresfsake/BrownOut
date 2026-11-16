@@ -25,6 +25,20 @@ export interface Pending {
   typed?: string | undefined;
 }
 
+/**
+ * One thing the player did, as it is recorded. A seed and a list of these is a whole session:
+ * playing them again gives the same session, event for event (see `replay`).
+ */
+export type Move =
+  | { t: "say"; text: string; thread?: string | undefined }
+  | { t: "pick"; index: number }
+  | { t: "dismiss" }
+  | { t: "wait" }
+  | { t: "cancel" }
+  | { t: "end" }
+  /** The clock moving by itself while the player thought: `n` idle minutes in a row. */
+  | { t: "tick"; n: number };
+
 export interface Game {
   scenarioId: string;
   seed: number;
@@ -34,6 +48,8 @@ export interface Game {
   paused: boolean;
   /** Counts notes the interface adds itself, so their ids stay unique. */
   notes: number;
+  /** Everything the player has done so far, in order. */
+  moves: Move[];
 }
 
 export const MAX_INPUT = 600;
@@ -125,7 +141,17 @@ export function newGame(scenario: Scenario, seed: number): Game {
     pending: null,
     paused: false,
     notes: 0,
+    moves: [],
   };
+}
+
+/** Adds a move to the record. Idle minutes in a row are kept as one move with a count. */
+function recorded(game: Game, move: Move): Game {
+  const last = game.moves[game.moves.length - 1];
+  if (move.t === "tick" && last?.t === "tick") {
+    return { ...game, moves: [...game.moves.slice(0, -1), { t: "tick", n: last.n + move.n }] };
+  }
+  return { ...game, moves: [...game.moves, move] };
 }
 
 function withEvents(
@@ -157,11 +183,15 @@ function note(game: Game, text: string): Game {
 export function submit(scenario: Scenario, game: Game, text: string, threadId?: string): Game {
   const trimmed = text.trim().slice(0, MAX_INPUT);
   if (trimmed === "" || game.session.status !== "running") return game;
+  const said = recorded(
+    game,
+    threadId ? { t: "say", text: trimmed, thread: threadId } : { t: "say", text: trimmed },
+  );
   const turn = takeTurn(scenario, game.session, trimmed, threadId);
   if (turn.choose) {
-    return { ...game, pending: { kind: "choose", candidates: turn.choose, typed: trimmed } };
+    return { ...said, pending: { kind: "choose", candidates: turn.choose, typed: trimmed } };
   }
-  let next = withEvents(scenario, game, turn.state, turn.events, trimmed);
+  let next = withEvents(scenario, said, turn.state, turn.events, trimmed);
   for (const part of turn.unread) next = note(next, `Not understood: "${part}"`);
   if (turn.suggestions && turn.suggestions.length > 0) {
     next = { ...next, pending: { kind: "suggest", candidates: turn.suggestions } };
@@ -174,22 +204,76 @@ export function pick(scenario: Scenario, game: Game, index: number): Game {
   const candidate = game.pending?.candidates[index];
   if (!candidate || game.session.status !== "running") return game;
   const done = applyIntents(scenario, game.session, [candidate.intent]);
-  return withEvents(scenario, game, done.state, done.events, game.pending?.typed);
+  return withEvents(
+    scenario,
+    recorded(game, { t: "pick", index }),
+    done.state,
+    done.events,
+    game.pending?.typed,
+  );
 }
 
-export const dismiss = (game: Game): Game => ({ ...game, pending: null });
+export const dismiss = (game: Game): Game =>
+  game.pending ? { ...recorded(game, { t: "dismiss" }), pending: null } : game;
 
-/** Wait, cancel, end, or an idle tick of the clock. */
+/** Wait, cancel, end, or the clock moving by itself for a number of idle minutes. */
 export function control(scenario: Scenario, game: Game, input: EngineInput): Game {
   if (game.session.status !== "running") return game;
-  if (input.type === "tick" && game.paused) return game;
+  if (input.type === "tick") {
+    if (game.paused) return game;
+    // Idle minutes pass one at a time, however many are asked for, so that a recorded session
+    // plays back the same whether the minutes arrived singly or together.
+    let next = game;
+    for (let n = 0; n < input.minutes && next.session.status === "running"; n++) {
+      const step = resolve(scenario, next.session, { type: "tick", minutes: 1 });
+      // An idle tick must not wipe a question the player is still answering.
+      next = {
+        ...withEvents(scenario, recorded(next, { t: "tick", n: 1 }), step.state, step.events),
+        pending: next.pending,
+      };
+    }
+    return next;
+  }
+  const move: Move =
+    input.type === "wait" ? { t: "wait" } : input.type === "end" ? { t: "end" } : { t: "cancel" };
+  if (input.type === "intent") return game; // typed text goes through `submit`, never through here
   const step = resolve(scenario, game.session, input);
-  // An idle tick must not wipe a question the player is still answering.
-  const next = withEvents(scenario, game, step.state, step.events);
-  return input.type === "tick" ? { ...next, pending: game.pending } : next;
+  return withEvents(scenario, recorded(game, move), step.state, step.events);
 }
 
 export const setPaused = (game: Game, paused: boolean): Game => ({ ...game, paused });
+
+/** Plays one recorded move. A move that cannot apply, such as a pick with nothing offered, does nothing. */
+export function applyMove(scenario: Scenario, game: Game, move: Move): Game {
+  switch (move.t) {
+    case "say":
+      return submit(scenario, game, move.text, move.thread);
+    case "pick":
+      return pick(scenario, game, move.index);
+    case "dismiss":
+      return dismiss(game);
+    case "wait":
+      return control(scenario, game, { type: "wait" });
+    case "cancel":
+      return control(scenario, game, { type: "cancelTask" });
+    case "end":
+      return control(scenario, game, { type: "end" });
+    case "tick":
+      return control(scenario, game, { type: "tick", minutes: move.n });
+  }
+}
+
+/**
+ * A session played again from its seed and its moves. The result has one game for each point in
+ * the record: `steps[0]` is the opening and `steps[k]` is the game after the first k moves.
+ */
+export function replay(scenario: Scenario, seed: number, moves: readonly Move[]): Game[] {
+  const steps = [newGame(scenario, seed)];
+  for (const move of moves) {
+    steps.push(applyMove(scenario, steps[steps.length - 1] as Game, move));
+  }
+  return steps;
+}
 
 // ---------------------------------------------------------------------------------------------
 // What the panels show. Derived, never stored.
@@ -318,7 +402,8 @@ export const unansweredCount = (views: readonly ThreadView[]): number =>
 // ---------------------------------------------------------------------------------------------
 // Saving a game in the tab, so a reload does not lose it.
 
-const SAVE_VERSION = 1;
+// 2: a game carries the record of its moves.
+const SAVE_VERSION = 2;
 
 export function serialise(game: Game): string {
   return JSON.stringify({ v: SAVE_VERSION, game });
@@ -333,6 +418,7 @@ export function deserialise(text: string | null, scenarioIds: readonly string[])
     const { v, game } = parsed as { v?: unknown; game?: Game };
     if (v !== SAVE_VERSION || !game || !scenarioIds.includes(game.scenarioId)) return null;
     if (!Array.isArray(game.feed) || typeof game.session?.minute !== "number") return null;
+    if (!Array.isArray(game.moves)) return null;
     return game;
   } catch {
     return null;

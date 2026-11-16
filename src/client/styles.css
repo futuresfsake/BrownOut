@@ -243,8 +243,16 @@ label,
   border-bottom: 1px solid var(--rule);
 }
 
-.situations h2 {
+.situations h2,
+.situations h3 {
   font: 600 17px/24px var(--sans);
+}
+
+/* Why a session file was not opened. Empty until there is something to say. */
+.refused {
+  margin-top: 10px;
+  color: var(--signal);
+  font-weight: 600;
 }
 
 .situation-number {
@@ -758,16 +766,211 @@ main:focus {
   padding-left: 1.2em;
 }
 
-.stronger {
-  display: grid;
+/* Evidence is also the way to the timeline, so it is a button that reads as a quoted line. */
+button.evidence {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 20px;
 }
 
-.stronger li {
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  gap: 8px;
-  padding: 5px 0;
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 28px;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
+}
+
+.facts div {
+  display: flex;
+  gap: 8px;
+}
+
+.facts dt {
+  color: var(--ink-2);
+}
+
+/* The timeline: one figure as a line, the key moments as ticks, then the moments in words. */
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 6px;
+}
+
+.chart-axis {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-mark {
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-mark-bad {
+  stroke: var(--signal);
+  stroke-width: 3;
+}
+
+.chart-mark-now {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.chart-mark-bad.chart-mark-now {
+  stroke: var(--signal);
+}
+
+.chart-text {
+  font: 500 12px var(--mono);
+  fill: var(--ink-2);
+}
+
+.moments {
+  display: grid;
+  margin-top: 4px;
+}
+
+.moment {
+  display: grid;
+  grid-template-columns: 52px 128px 1fr;
+  gap: 8px;
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid transparent;
+}
+
+.moment-word {
+  font: 600 12px/22px var(--sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.moment-bad {
+  border-left-color: var(--signal);
+}
+
+.moment-bad .moment-word {
+  color: var(--signal);
+}
+
+/* The moment a line of the debrief pointed at. */
+.moment[aria-current="true"] {
+  background: var(--paper-1);
+  border-left-color: var(--ink);
+}
+
+.moment:focus-visible {
+  outline-offset: -2px;
+}
+
+/* The stronger response beside what the player did. */
+.stronger {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stronger th {
+  font: 600 12px/20px var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--ink-2);
+  padding: 4px 12px 4px 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.stronger td {
+  vertical-align: top;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.stronger td:last-child {
+  width: 30%;
+  padding-right: 0;
+}
+
+.stronger-step {
+  display: block;
+  font-weight: 600;
+}
+
+.stronger-why {
+  display: block;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--ink-2);
+}
+
+.stronger-not {
+  color: var(--signal);
+  font-weight: 600;
+}
+
+/* ---------- watching a recorded session ---------- */
+
+.replay {
+  display: grid;
+  gap: 6px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.replay-count {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.replay-what {
+  min-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .moment {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .moment > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .stronger thead {
+    display: none;
+  }
+
+  .stronger tr {
+    display: grid;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .stronger td,
+  .stronger td:last-child {
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .replay .row button {
+    flex: 1 1 30%;
+  }
 }
 
 /* ---------- the room: the 3D view, with one panel beside it ---------- */

@@ -1,6 +1,7 @@
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  GAME_URL,
   makeSevere,
   openThread,
   order,
@@ -84,6 +85,33 @@ for (const width of [1440, 375]) {
       await page.getByRole("button", { name: "Pause", exact: true }).click();
       await page.keyboard.press("?");
       await check(page, "room paused with the keys listed");
+    });
+
+    test("a refused file, a recording being watched, and its debrief", async ({ page }) => {
+      await page.goto(GAME_URL);
+      await page.getByLabel("Session file").setInputFiles({
+        name: "notes.json",
+        mimeType: "application/json",
+        buffer: Buffer.from("{}", "utf8"),
+      });
+      await expect(page.getByRole("alert")).toContainText("not a BrownOut session");
+      await check(page, "start with a file refused");
+
+      await page.getByRole("button", { name: "Watch the sample" }).click();
+      const controls = page.getByRole("region", { name: /^Recorded session/ });
+      await check(page, "recording at the opening");
+      for (let n = 0; n < 9; n++) await controls.getByRole("button", { name: "Forward" }).click();
+      await check(page, "recording when severe");
+      await controls.getByRole("button", { name: "To the end" }).click();
+      await check(page, "recording at the end");
+
+      await page.getByRole("button", { name: "Read the debrief" }).click();
+      await check(page, "debrief of the sample");
+      await page.locator(".dimensions li").first().getByRole("button").click();
+      await check(page, "debrief with a moment selected");
+      await page.getByRole("button", { name: "Save this session" }).click();
+      await expect(page.getByRole("status").last()).toContainText("Saved as");
+      await check(page, "debrief after saving");
     });
   });
 }

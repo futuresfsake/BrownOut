@@ -1,0 +1,564 @@
+{
+  "format": "brownout-session",
+  "version": 1,
+  "scenarioId": "dial-tone",
+  "scenarioVersion": 1,
+  "seed": 7,
+  "moves": [
+    {
+      "t": "say",
+      "text": "look at the overall picture"
+    },
+    {
+      "t": "tick",
+      "n": 2
+    },
+    {
+      "t": "say",
+      "text": "No ETA yet. I will update you in ten minutes.",
+      "thread": "cto"
+    },
+    {
+      "t": "say",
+      "text": "restart every auth-core node"
+    },
+    {
+      "t": "wait"
+    },
+    {
+      "t": "tick",
+      "n": 1
+    },
+    {
+      "t": "say",
+      "text": "find out what changed on auth-core"
+    },
+    {
+      "t": "wait"
+    },
+    {
+      "t": "say",
+      "text": "roll back the certificate bundle on the bad nodes"
+    },
+    {
+      "t": "say",
+      "text": "Please update the status page: we have an outage.",
+      "thread": "comms"
+    },
+    {
+      "t": "say",
+      "text": "Outage in two regions, we know the cause, fix under way. Tell customers we are working on it.",
+      "thread": "support"
+    },
+    {
+      "t": "say",
+      "text": "A certificate bundle on auth-core is the cause. Rolling it back now.",
+      "thread": "cto"
+    },
+    {
+      "t": "wait"
+    },
+    {
+      "t": "say",
+      "text": "We are aware of an outage in two regions. We have identified the cause and a fix is under way.",
+      "thread": "journalist"
+    },
+    {
+      "t": "say",
+      "text": "check whether emergency calls were affected"
+    },
+    {
+      "t": "say",
+      "text": "This is an availability incident. I see no sign of data exposure so far. I will confirm after the access logs are reviewed.",
+      "thread": "counsel"
+    },
+    {
+      "t": "wait"
+    },
+    {
+      "t": "say",
+      "text": "Emergency calling was affected. Please notify the regulator duty line.",
+      "thread": "comms"
+    },
+    {
+      "t": "say",
+      "text": "verify that service has recovered"
+    },
+    {
+      "t": "wait"
+    },
+    {
+      "t": "say",
+      "text": "tell the CTO, support and comms: service is restored. All clear."
+    }
+  ],
+  "result": {
+    "status": "resolved",
+    "minute": 27,
+    "score": 72,
+    "events": 78,
+    "digest": "5b3a53df"
+  },
+  "log": [
+    {
+      "id": "e1",
+      "clock": "02:14",
+      "type": "session_started",
+      "text": "You are the on-call engineering lead at Halden Mobile. Your pager went off a minute ago: customers in two regions are failing to connect, and the dashboard shows errors on subscriber authentication and on billing. Mika Tan is the engineer on shift and will carry out what you ask."
+    },
+    {
+      "id": "e2",
+      "clock": "02:14",
+      "type": "alert",
+      "text": "ALERT 02:14: subscriber attach failures rising in two regions. Billing errors are also elevated."
+    },
+    {
+      "id": "e3",
+      "clock": "02:14",
+      "type": "obligation",
+      "text": "Duty - Status page updated: open"
+    },
+    {
+      "id": "e4",
+      "clock": "02:14",
+      "type": "player_action",
+      "text": "You: Look at the overall picture"
+    },
+    {
+      "id": "e5",
+      "clock": "02:14",
+      "type": "task_started",
+      "text": "Mika: on it - Look at the overall picture."
+    },
+    {
+      "id": "e6",
+      "clock": "02:16",
+      "type": "clue_revealed"
+    },
+    {
+      "id": "e7",
+      "clock": "02:16",
+      "type": "clue_revealed"
+    },
+    {
+      "id": "e8",
+      "clock": "02:16",
+      "type": "task_completed",
+      "text": "Mika: Failures are in the North and Coastal regions only. auth-core is rejecting about a third of sign-in attempts. Everything else looks normal at this level."
+    },
+    {
+      "id": "e9",
+      "clock": "02:17",
+      "type": "message",
+      "text": "Ramon: What's the ETA? I need something I can tell the board in 10 minutes."
+    },
+    {
+      "id": "e10",
+      "clock": "02:17",
+      "type": "player_message",
+      "text": "You to Ramon Villareal: No ETA yet. I will update you in ten minutes."
+    },
+    {
+      "id": "e11",
+      "clock": "02:17",
+      "type": "trust",
+      "text": "Ramon Villareal: trust up (answered in time)"
+    },
+    {
+      "id": "e12",
+      "clock": "02:17",
+      "type": "commitment_made",
+      "text": "You promised Ramon Villareal: an update (by 02:27)"
+    },
+    {
+      "id": "e13",
+      "clock": "02:18",
+      "type": "message",
+      "text": "Joy: About 400 tickets open, all 'no signal' or 'can't connect'. What do I tell customers?"
+    },
+    {
+      "id": "e14",
+      "clock": "02:18",
+      "type": "player_action",
+      "text": "You: Restart every auth-core node"
+    },
+    {
+      "id": "e15",
+      "clock": "02:18",
+      "type": "task_started",
+      "text": "Mika: on it - Restart every auth-core node."
+    },
+    {
+      "id": "e16",
+      "clock": "02:23",
+      "type": "mitigation_applied"
+    },
+    {
+      "id": "e17",
+      "clock": "02:23",
+      "type": "task_completed",
+      "text": "Mika: All nodes restarted. Every connected device is signing in again, and half of them are hitting the broken nodes."
+    },
+    {
+      "id": "e18",
+      "clock": "02:24",
+      "type": "message",
+      "text": "Carla Whitlock, The Daily Circuit: Customers are posting that Halden Mobile is down. Can you comment before 02:45?"
+    },
+    {
+      "id": "e19",
+      "clock": "02:24",
+      "type": "message",
+      "text": "Joy: Tickets just jumped to 600. What did you change?"
+    },
+    {
+      "id": "e20",
+      "clock": "02:24",
+      "type": "player_action",
+      "text": "You: Find out what changed on auth-core"
+    },
+    {
+      "id": "e21",
+      "clock": "02:24",
+      "type": "task_started",
+      "text": "Mika: on it - Find out what changed on auth-core."
+    },
+    {
+      "id": "e22",
+      "clock": "02:26",
+      "type": "clue_revealed"
+    },
+    {
+      "id": "e23",
+      "clock": "02:26",
+      "type": "clue_revealed"
+    },
+    {
+      "id": "e24",
+      "clock": "02:26",
+      "type": "task_completed",
+      "text": "Mika: A scheduled certificate rotation ran on auth-core at 01:52. The 6 failing nodes loaded a certificate bundle with no intermediate certificate."
+    },
+    {
+      "id": "e25",
+      "clock": "02:26",
+      "type": "message",
+      "text": "Ramon: Customers affected just went up to 780,000. What did you do?"
+    },
+    {
+      "id": "e26",
+      "clock": "02:26",
+      "type": "player_action",
+      "text": "You: Roll back the certificate bundle on the 6 bad nodes, one at a time"
+    },
+    {
+      "id": "e27",
+      "clock": "02:26",
+      "type": "task_started",
+      "text": "Mika: on it - Roll back the certificate bundle on the 6 bad nodes, one at a time."
+    },
+    {
+      "id": "e28",
+      "clock": "02:27",
+      "type": "message",
+      "text": "Ramon: Ten minutes are up. Where are we?"
+    },
+    {
+      "id": "e29",
+      "clock": "02:27",
+      "type": "player_message",
+      "text": "You to Daniel Osei: Please update the status page: we have an outage."
+    },
+    {
+      "id": "e30",
+      "clock": "02:27",
+      "type": "trust",
+      "text": "Daniel Osei: trust up (you kept them informed)"
+    },
+    {
+      "id": "e31",
+      "clock": "02:27",
+      "type": "directive",
+      "text": "You asked for: Update the public status page."
+    },
+    {
+      "id": "e32",
+      "clock": "02:28",
+      "type": "commitment_broken",
+      "text": "You did not keep your word to Ramon Villareal: an update"
+    },
+    {
+      "id": "e33",
+      "clock": "02:28",
+      "type": "trust",
+      "text": "Ramon Villareal: trust down (a promise was broken)"
+    },
+    {
+      "id": "e34",
+      "clock": "02:28",
+      "type": "message",
+      "text": "Ramon: You said I would hear from you by 02:27. I did not."
+    },
+    {
+      "id": "e35",
+      "clock": "02:28",
+      "type": "obligation",
+      "text": "Duty - Status page updated: met"
+    },
+    {
+      "id": "e36",
+      "clock": "02:28",
+      "type": "player_message",
+      "text": "You to Joy Antolin: Outage in two regions, we know the cause, fix under way. Tell customers we are working on it."
+    },
+    {
+      "id": "e37",
+      "clock": "02:28",
+      "type": "claim",
+      "text": "You said: \"Outage in two regions, we know the cause, fix under way. Tell customers we are working on it.\""
+    },
+    {
+      "id": "e38",
+      "clock": "02:28",
+      "type": "trust",
+      "text": "Joy Antolin: trust up (accurate statement)"
+    },
+    {
+      "id": "e39",
+      "clock": "02:29",
+      "type": "player_message",
+      "text": "You to Ramon Villareal: A certificate bundle on auth-core is the cause. Rolling it back now."
+    },
+    {
+      "id": "e40",
+      "clock": "02:29",
+      "type": "trust",
+      "text": "Ramon Villareal: trust up (answered in time)"
+    },
+    {
+      "id": "e41",
+      "clock": "02:29",
+      "type": "claim",
+      "text": "You said: \"A certificate bundle on auth-core is the cause. Rolling it back now.\""
+    },
+    {
+      "id": "e42",
+      "clock": "02:29",
+      "type": "trust",
+      "text": "Ramon Villareal: trust up (accurate statement)"
+    },
+    {
+      "id": "e43",
+      "clock": "02:31",
+      "type": "message",
+      "text": "Priya Nair: Could any customer data have been exposed? I need a yes or no, and what it is based on."
+    },
+    {
+      "id": "e44",
+      "clock": "02:31",
+      "type": "player_message",
+      "text": "You to Carla Whitlock: We are aware of an outage in two regions. We have identified the cause and a fix is under way."
+    },
+    {
+      "id": "e45",
+      "clock": "02:31",
+      "type": "trust",
+      "text": "Carla Whitlock: trust up (answered in time)"
+    },
+    {
+      "id": "e46",
+      "clock": "02:31",
+      "type": "claim",
+      "text": "You said: \"We are aware of an outage in two regions. We have identified the cause and a fix is under way.\""
+    },
+    {
+      "id": "e47",
+      "clock": "02:31",
+      "type": "trust",
+      "text": "Carla Whitlock: trust up (accurate statement)"
+    },
+    {
+      "id": "e48",
+      "clock": "02:32",
+      "type": "player_action",
+      "text": "You: Check whether emergency calling is affected"
+    },
+    {
+      "id": "e49",
+      "clock": "02:32",
+      "type": "task_queued",
+      "text": "Mika: I'll do that next - Check whether emergency calling is affected."
+    },
+    {
+      "id": "e50",
+      "clock": "02:33",
+      "type": "player_message",
+      "text": "You to Priya Nair: This is an availability incident. I see no sign of data exposure so far. I will confirm after the access logs are reviewed."
+    },
+    {
+      "id": "e51",
+      "clock": "02:33",
+      "type": "trust",
+      "text": "Priya Nair: trust up (answered in time)"
+    },
+    {
+      "id": "e52",
+      "clock": "02:33",
+      "type": "claim",
+      "text": "You said: \"This is an availability incident. I see no sign of data exposure so far. I will confirm after the access logs are reviewed.\""
+    },
+    {
+      "id": "e53",
+      "clock": "02:33",
+      "type": "commitment_made",
+      "text": "You promised Priya Nair: an update"
+    },
+    {
+      "id": "e54",
+      "clock": "02:36",
+      "type": "mitigation_applied"
+    },
+    {
+      "id": "e55",
+      "clock": "02:36",
+      "type": "task_completed",
+      "text": "Mika: All 6 nodes are on the previous bundle. Attach success is recovering."
+    },
+    {
+      "id": "e56",
+      "clock": "02:36",
+      "type": "task_started",
+      "text": "Mika: on it - Check whether emergency calling is affected."
+    },
+    {
+      "id": "e57",
+      "clock": "02:36",
+      "type": "player_message",
+      "text": "You to Duty officer: Emergency calling was affected. Please notify the regulator duty line."
+    },
+    {
+      "id": "e58",
+      "clock": "02:36",
+      "type": "trust",
+      "text": "Duty officer: trust up (you kept them informed)"
+    },
+    {
+      "id": "e59",
+      "clock": "02:36",
+      "type": "directive",
+      "text": "You asked for: Notify the regulator duty line."
+    },
+    {
+      "id": "e60",
+      "clock": "02:36",
+      "type": "claim",
+      "text": "You said: \"Emergency calling was affected. Please notify the regulator duty line.\""
+    },
+    {
+      "id": "e61",
+      "clock": "02:37",
+      "type": "player_action",
+      "text": "You: Confirm that attach success is back to normal"
+    },
+    {
+      "id": "e62",
+      "clock": "02:37",
+      "type": "task_queued",
+      "text": "Mika: I'll do that next - Confirm that attach success is back to normal."
+    },
+    {
+      "id": "e63",
+      "clock": "02:38",
+      "type": "clue_revealed"
+    },
+    {
+      "id": "e64",
+      "clock": "02:38",
+      "type": "task_completed",
+      "text": "Mika: Affected devices cannot place emergency calls reliably."
+    },
+    {
+      "id": "e65",
+      "clock": "02:38",
+      "type": "task_started",
+      "text": "Mika: on it - Confirm that attach success is back to normal."
+    },
+    {
+      "id": "e66",
+      "clock": "02:38",
+      "type": "obligation",
+      "text": "Duty - Regulator notified: met"
+    },
+    {
+      "id": "e67",
+      "clock": "02:40",
+      "type": "clue_revealed"
+    },
+    {
+      "id": "e68",
+      "clock": "02:40",
+      "type": "task_completed",
+      "text": "Mika: Attach success is back to baseline."
+    },
+    {
+      "id": "e69",
+      "clock": "02:40",
+      "type": "message",
+      "text": "Joy: Recovery looks good from our side. What wording do my agents use for the all-clear?"
+    },
+    {
+      "id": "e70",
+      "clock": "02:40",
+      "type": "message",
+      "text": "Daniel: I need the all-clear wording to update the status page."
+    },
+    {
+      "id": "e71",
+      "clock": "02:40",
+      "type": "obligation",
+      "text": "Duty - All-clear sent: open"
+    },
+    {
+      "id": "e72",
+      "clock": "02:40",
+      "type": "player_message",
+      "text": "You to Ramon Villareal, Joy Antolin, Daniel Osei: tell the CTO, support and comms: service is restored. All clear."
+    },
+    {
+      "id": "e73",
+      "clock": "02:40",
+      "type": "trust",
+      "text": "Ramon Villareal: trust up (you kept them informed)"
+    },
+    {
+      "id": "e74",
+      "clock": "02:40",
+      "type": "trust",
+      "text": "Joy Antolin: trust up (answered in time)"
+    },
+    {
+      "id": "e75",
+      "clock": "02:40",
+      "type": "trust",
+      "text": "Daniel Osei: trust up (answered in time)"
+    },
+    {
+      "id": "e76",
+      "clock": "02:40",
+      "type": "directive",
+      "text": "You asked for: Send the all-clear."
+    },
+    {
+      "id": "e77",
+      "clock": "02:41",
+      "type": "obligation",
+      "text": "Duty - All-clear sent: met"
+    },
+    {
+      "id": "e78",
+      "clock": "02:41",
+      "type": "ended",
+      "text": "The incident is resolved."
+    }
+  ]
+}

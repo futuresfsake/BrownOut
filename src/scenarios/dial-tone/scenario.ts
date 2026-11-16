@@ -925,9 +925,14 @@ export const dialTone: Scenario = {
   scoring: { rootCauseClue: "missing-intermediate", causeTargetMinute: 6 },
 
   idealPath: [
-    { atMinute: 0, intent: { kind: "investigate", id: "overview" } },
+    {
+      atMinute: 0,
+      intent: { kind: "investigate", id: "overview" },
+      why: "Two minutes on the whole picture tells you which alarms are the incident and which are noise.",
+    },
     {
       atMinute: 3,
+      why: "Saying there is no ETA yet, with a time for the next update, buys more trust than a guess.",
       intent: {
         kind: "communicate",
         to: ["cto"],
@@ -935,10 +940,19 @@ export const dialTone: Scenario = {
         promises: [{ to: "cto", what: "an update", dueInMinutes: 10 }],
       },
     },
-    { atMinute: 4, intent: { kind: "investigate", id: "auth-changes" } },
-    { atMinute: 6, intent: { kind: "mitigate", id: "rollback-bundle" } },
+    {
+      atMinute: 4,
+      intent: { kind: "investigate", id: "auth-changes" },
+      why: "Most outages follow a change. Asking what changed is the shortest route to the cause.",
+    },
+    {
+      atMinute: 6,
+      intent: { kind: "mitigate", id: "rollback-bundle" },
+      why: "Undo the change that broke it. It is the smallest fix that touches nothing still working.",
+    },
     {
       atMinute: 7,
+      why: "Customers already know. A status page that says so stops support from drowning.",
       intent: {
         kind: "communicate",
         to: ["comms"],
@@ -971,6 +985,7 @@ export const dialTone: Scenario = {
     },
     {
       atMinute: 15,
+      why: "Say what you know and no more. The press quotes you either way.",
       intent: {
         kind: "communicate",
         to: ["journalist"],
@@ -998,6 +1013,7 @@ export const dialTone: Scenario = {
     },
     {
       atMinute: 19,
+      why: "Emergency calling was affected, which starts a deadline to tell the regulator.",
       intent: {
         kind: "communicate",
         to: ["comms"],
@@ -1005,7 +1021,11 @@ export const dialTone: Scenario = {
         directives: ["notify-regulator"],
       },
     },
-    { atMinute: 20, intent: { kind: "investigate", id: "verify-recovery" } },
+    {
+      atMinute: 20,
+      intent: { kind: "investigate", id: "verify-recovery" },
+      why: "Check that service is back before anyone says it is.",
+    },
     {
       atMinute: 22,
       intent: {

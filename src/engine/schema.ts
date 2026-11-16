@@ -253,7 +253,13 @@ const LessonSchema = z.strictObject({
   evidence: z.strictObject({ type: z.string().min(1), id: id.optional() }).optional(),
 });
 
-const IdealStepSchema = z.strictObject({ atMinute: minutes, intent: IntentSchema });
+const IdealStepSchema = z.strictObject({
+  atMinute: minutes,
+  intent: IntentSchema,
+  // Why this step, in a sentence. Steps that have one are the ones the debrief shows as the
+  // stronger response; the rest are needed to play the path but are not worth a line.
+  why: z.string().min(1).optional(),
+});
 
 export const ScenarioSchema = z.strictObject({
   id,
