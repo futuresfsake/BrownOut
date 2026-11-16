@@ -16,8 +16,10 @@ The design puts everything that must be exact into code that can be tested witho
 | Signal tests | The pure mapping from public state to room description: light level, lamps, wall board, television | None | Every commit |
 | Interface logic | The pure functions between the engine and the panels (`src/client/app`): the log feed, the board, threads, saving and restoring, and a whole typed session to the resolved ending | None | Every commit |
 | Browser tests, flat view | Against the built site with a fixed seed: briefing to the resolved ending by typing, keyboard-only play, phone layout at 375 and 360 px, accessibility scan, the idle clock with a fake timer, a reload, and a count of network requests | None | Every pull request, in CI. Locally with `npm run e2e` |
-| Browser tests, 3D view | The room loads and draws something, each station opens its panel, switching views keeps state, WebGL off falls back to flat view, no frames drawn while idle | None | Every push |
-| 3D visual and performance check | Screenshots of every station at each light level, frame-rate readings on two reference devices | None | By hand at M3 stage B and M6 |
+| Signal tests, continued | Station data, camera easing, the light fade and its two dips, the slow-frame counter, text fitting, and which sounds a change makes (`tests/client/room.test.ts`) | None | Every commit |
+| Browser tests, 3D view | A whole typed session to the resolved ending in the room, on a laptop and at phone size. Each station opens its panel. Keys, buttons, clicking an object and swiping. Switching views keeps the session, typed text and log position. WebGL off and a lost graphics context fall back to flat view. No frames while idle. Draw calls and triangles under budget. The 3D chunk is separate, under 300 KB compressed, and never fetched by flat view. Accessibility scan at every station | None | Every pull request, in CI. Locally with `npm run e2e` |
+| 3D screenshots | Every station at each light level and each room state, at three widths, and a short recording (`npm run e2e:evidence`) | None | By hand at M3 stage B and M6 |
+| Frame-rate readings | Every frame timed while the camera moves, written with the name of the graphics card (`npm run e2e:measure`, DL-43) | None | By hand on each reference device at M3 stage B and M6 |
 | Interpreter accuracy | Labelled phrasings per scenario mapped to the expected intent | Live | On demand and before a release |
 | Narration checks | Scripted sessions against the live model, counting guard failures, fallbacks and declines | Live | On demand and before a release |
 
@@ -35,8 +37,9 @@ The room is hard to test by looking at pixels and does not need to be, because o
 
 - All behaviour lives in the panels and in the engine, which are tested without 3D.
 - What the room shows is decided by pure functions in `signals/`. Those are unit tested: given this state, the light level is 2, the phone lamp is on, the television is off.
-- The 3D browser tests check wiring, not appearance. They use the hidden HTML station controls to move around, and read a small debug description of the scene that the room exposes in test builds.
-- Headless browsers draw WebGL with a software renderer. That is enough to prove the scene loads and responds. It says nothing about speed, so frame rates are measured by hand on real devices.
+- The 3D browser tests check wiring, not appearance. They use the HTML station buttons to move around, and read what the room shows from `data-` attributes on its element and from the sentence written for screen readers.
+- The room counts its own frames. A test waits until the count stops before it looks, and the idle test asserts that it stays stopped.
+- Headless browsers draw WebGL with a software renderer. That is enough to prove the scene loads and responds. It says nothing about speed, so frame rates are read separately on real devices with `npm run e2e:measure`.
 - Appearance is checked by a person against the screenshots, at M3 stage B and again at M6.
 
 ## Interpreter accuracy set

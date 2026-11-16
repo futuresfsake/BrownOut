@@ -5,20 +5,26 @@ interface Props {
   threads: readonly ThreadView[];
   openId: string | null;
   disabled: boolean;
+  /**
+   * Flat view lists everyone, with the press as a group at the foot. In the room the phone
+   * station lists the people and the television station lists the press.
+   */
+  show?: "all" | "people" | "press";
   onOpen: (threadId: string | null) => void;
   onReply: (threadId: string, text: string) => void;
 }
 
 /** One thread per person. Unanswered threads say so in words, not only with a marker. */
-export function Inbox({ threads, openId, disabled, onOpen, onReply }: Props) {
-  const open = threads.find((t) => t.id === openId);
+export function Inbox({ threads, openId, disabled, show = "all", onOpen, onReply }: Props) {
+  const listed = threads.filter((t) => show === "all" || t.press === (show === "press"));
+  const open = listed.find((t) => t.id === openId);
   if (open)
     return (
       <Thread thread={open} disabled={disabled} onBack={() => onOpen(null)} onReply={onReply} />
     );
 
   const order = (t: ThreadView) => (t.state === "Overdue" ? 0 : t.state === "Unanswered" ? 1 : 2);
-  const sorted = [...threads].sort((a, b) => order(a) - order(b) || b.lastMinute - a.lastMinute);
+  const sorted = [...listed].sort((a, b) => order(a) - order(b) || b.lastMinute - a.lastMinute);
   const quiet = sorted.every((t) => t.messages.length === 0);
   const people = sorted.filter((t) => !t.press);
   const press = sorted.filter((t) => t.press);
@@ -59,14 +65,26 @@ export function Inbox({ threads, openId, disabled, onOpen, onReply }: Props) {
   return (
     <section className="inbox" aria-labelledby="inbox-title">
       <h2 id="inbox-title" className="panel-title">
-        Inbox
+        {show === "press" ? "Press" : "Inbox"}
       </h2>
-      {quiet && <p className="muted empty">No messages yet. You can still write to anyone.</p>}
-      {rows(people)}
-      {press.length > 0 && (
+      {quiet && (
+        <p className="muted empty">
+          {show === "press"
+            ? "The press has not been in touch. You can still write to them."
+            : "No messages yet. You can still write to anyone."}
+        </p>
+      )}
+      {show === "press" ? (
+        rows(press)
+      ) : (
         <>
-          <h3 className="label press-title">Press</h3>
-          {rows(press)}
+          {rows(people)}
+          {press.length > 0 && (
+            <>
+              <h3 className="label press-title">Press</h3>
+              {rows(press)}
+            </>
+          )}
         </>
       )}
     </section>

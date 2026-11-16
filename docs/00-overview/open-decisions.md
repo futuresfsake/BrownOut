@@ -13,7 +13,7 @@ Each entry has a default. The build proceeds on the default until the owner deci
 | O-05 | Model-generated scenarios? | No. Situations are authored, from the catalogue of one hundred (DL-28). | Done |
 | O-06 | Is pausing allowed? | Yes. It is a practice tool. A "no pause" option can come later. | M3 |
 | O-07 | Should scenario 1 be set in a named country with its real regulator? | No. Fictional carrier, fictional regulator, simplified deadlines. Real law would need review by someone qualified. | M5 |
-| O-08 | Is sound on by default? | Off. The player turns it on from the status strip. | M3 |
+| O-08 | Is sound on by default? | Decided (DL-41): off. The player turns it on from the status strip. | Done |
 
 ## Risks
 
@@ -53,3 +53,4 @@ These are accepted for version 1 and should be stated in the README once the app
 | L-10 | The camera has five fixed positions. The player cannot walk around or look freely. |
 | L-11 | Situation data, including the hidden cause, is in the files the browser downloads. A player who reads the page source can find the answer. |
 | L-12 | Understanding of typed text is limited to what the matcher and the authored phrasings cover. Unusual wording may need a second try. |
+| L-13 | The room's frame rate has been read on one laptop with a separate graphics card. It has not been read on integrated graphics or on a phone (NFR-11). Until it is, the offer of flat view on a slow device (DL-42) is the safeguard. |

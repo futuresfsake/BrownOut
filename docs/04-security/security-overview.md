@@ -32,9 +32,10 @@ base-uri 'none'; form-action 'none'
 ### The 3D room (stage B)
 
 - The room loads nothing from other origins. Geometry is built in code, fonts are self-hosted and sounds are generated (NFR-15).
-- Text drawn in the scene comes from the same state as the panels, and is drawn as glyphs, never interpreted.
-- The in-scene text helper may need a worker created from a blob URL, and HTML panels anchored to objects may need inline styles for their position. If so, allow `worker-src 'self' blob:` and `style-src-attr 'unsafe-inline'` and nothing wider. Confirm in the stage B spike and record the final policy here.
-- The debug description of the scene used by browser tests is compiled out of production builds.
+- Text drawn in the scene comes from the same state as the panels. It is drawn as glyphs on a canvas with `fillText`, never interpreted as markup.
+- The policy above is unchanged by the room (DL-36). There is no worker and no blob URL, because text is drawn on a canvas and not by a text helper. No panel is positioned with an inline style: the panels sit in the page's own grid beside the room. Sound is made by Web Audio oscillators, which need nothing from the policy. The browser test that reads the policy and the one that counts requests both run with the room open.
+- The room adds two packages to what ships: `three` and `@react-three/fiber`. They are in the dependency audit like everything else.
+- The browser tests read what the room shows from `data-` attributes on its element and from the sentence written for screen readers. Both are in the shipped page. They hold nothing that the panels beside them do not already show.
 
 ## Typed input
 

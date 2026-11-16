@@ -107,11 +107,13 @@ src/
   game/          one turn: the matcher reads, the engine resolves
   cli/           the terminal runner
   client/
-    app/         pure functions from the session to what the panels show; saving
+    app/         pure functions from the session to what the panels show; saving; sound
     panels/      board, log, inbox with its press group, decision box (HTML)
-    screens/     start, briefing, play (the flat view) and debrief
-    room/        the 3D view: scene, objects, stations, lights (stage B, loaded separately)
-    signals/     pure functions from the session to what the room shows (stage B)
+    screens/     start, briefing, play (the room or the flat view) and debrief
+    room/        the 3D view. Room.tsx is the scene and is the only file that imports
+                 three.js; it is loaded separately. Stations, the light fade, the frame
+                 counter and the drawn textures are plain modules beside it.
+    signals/     pure functions from the session to what the room shows
 tools/           scripts called by hooks and CI, scenario validator
 tests/           unit tests, scripted playthroughs, a whole typed session
 e2e/             Playwright, against the built site
