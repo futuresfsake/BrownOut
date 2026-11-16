@@ -38,7 +38,7 @@ const WATCHED = ["cto", "support", "comms"];
 
 // Stemmed verbs that mean "change something", as opposed to "look at something".
 const CHANGE_VERBS = new Set(
-  "rollback restart drain block throttl limit remov disabl enabl push kil stop cut drop send notify post publish updat redeploy switch shut".split(
+  "rollback restart drain block throttl limit remov disabl enabl push kil stop cut drop send notify post publish updat redeploy switch shut delet wipe eras mov move renam lock clos paus freez revert undo revok".split(
     " ",
   ),
 );
@@ -226,6 +226,88 @@ type ClauseResult =
 // Applied to text whose whitespace is already single spaces, so no repeated-whitespace groups.
 const TO_MIKA = /^(?:mika[,:]? ?|(?:tell|ask|have|get) mika (?:to )?)/i;
 
+/** The start of something said to a person, as opposed to something done. */
+const SPEECH =
+  /^(?:please )?(?:tell|ask|let|notify|call|email|message|reply|update|inform|warn|brief|thank|phone|ring|contact|answer|respond)\b/;
+/** "... to the", just before a name: "report this to the regulator". */
+const TO_SOMEONE = /\bto(?: the| our| my)? $/;
+
+/**
+ * The one option that the words name exactly: the same words as its label or as one of its
+ * example phrasings, in any order. Typing an option's own name is never a question, however
+ * many other options share some of its words. One word is not enough.
+ */
+function exactly(index: Index, words: string[], allow: (o: Option) => boolean): Option | null {
+  const typed = new Set(words);
+  if (typed.size < 2) return null;
+  const same = index.options.filter(
+    (o) =>
+      allow(o) &&
+      o.phrases.some((p) => {
+        const phrase = new Set(p);
+        return phrase.size === typed.size && [...phrase].every((w) => typed.has(w));
+      }),
+  );
+  return same.length === 1 ? (same[0] ?? null) : null;
+}
+
+type ClearAction =
+  | { kind: "act"; result: ClauseResult }
+  | { kind: "ask"; candidates: Candidate[] }
+  | { kind: "none" };
+
+/**
+ * Whether the words plainly name something to look at or something to change. Only those two:
+ * a request to a person is a message, and is handled as one.
+ */
+function clearAction(
+  sc: Scenario,
+  index: Index,
+  raw: string,
+  cleaned: string,
+  words: string[],
+): ClearAction {
+  const exact = exactly(index, words, (o) => o.type !== "directive");
+  if (exact) {
+    return {
+      kind: "act",
+      result: {
+        kind: "act",
+        intent: toIntent(sc, exact),
+        restatement: `Ask Mika: ${exact.label}`,
+      },
+    };
+  }
+  const inquiry = QUESTION.test(raw.trim()) || QUESTION.test(cleaned) || words.includes("check");
+  const change = words.some((w) => CHANGE_VERBS.has(w));
+  const ranked = index.options
+    .filter((o) => o.type !== "directive")
+    .map((o) => {
+      const looks = o.type === "investigate";
+      const base = Math.max(0, ...o.phrases.map((p) => similarity(index, words, p)));
+      const factor =
+        inquiry && !change ? (looks ? 1.15 : 0.7) : change && !inquiry ? (looks ? 0.85 : 1.1) : 1;
+      return { label: o.label, intent: toIntent(sc, o), score: Math.min(1, base * factor) };
+    })
+    .sort((a, b) => b.score - a.score);
+  const best = ranked[0];
+  if (!best) return { kind: "none" };
+  if (
+    words.length >= 2 &&
+    best.score >= THRESHOLDS.act &&
+    best.score - (ranked[1]?.score ?? 0) >= THRESHOLDS.lead
+  ) {
+    return {
+      kind: "act",
+      result: { kind: "act", intent: best.intent, restatement: `Ask Mika: ${best.label}` },
+    };
+  }
+  if (inquiry && best.score >= THRESHOLDS.ask) {
+    return { kind: "ask", candidates: ranked.filter((c) => c.score >= THRESHOLDS.ask) };
+  }
+  return { kind: "none" };
+}
+
 function readClause(sc: Scenario, index: Index, rawClause: string, ctx: ReadContext): ClauseResult {
   const spaced = rawClause.replace(/\s+/g, " ").trim();
   const addressedToMika = TO_MIKA.test(spaced);
@@ -243,8 +325,40 @@ function readClause(sc: Scenario, index: Index, rawClause: string, ctx: ReadCont
   }
 
   const inThread = ctx.threadId !== undefined && ctx.threadId !== "engineer";
-  let recipients = addressedToMika ? [] : findRecipients(sc, index, cleaned);
-  if (inThread && recipients.length === 0 && ctx.threadId) recipients = [ctx.threadId];
+  const mentioned = addressedToMika ? [] : findRecipients(sc, index, cleaned);
+  // Naming someone is not always writing to them: "who is this researcher?" is a question about
+  // her, and "only the researcher has the files", typed to counsel, is a statement to counsel.
+  // Text is addressed when it opens with a verb of speech or a name, or says "to" someone.
+  const addressed =
+    mentioned.length > 0 &&
+    (SPEECH.test(cleaned) ||
+      index.aliases.some((a) => {
+        const found = a.pattern.exec(cleaned);
+        return (
+          found !== null && (found.index === 0 || TO_SOMEONE.test(cleaned.slice(0, found.index)))
+        );
+      }));
+  let recipients = mentioned;
+  if (inThread && ctx.threadId) {
+    // A reply in a thread goes to that person. Others are added only when it is addressed to them.
+    recipients = addressed ? [...new Set([ctx.threadId, ...mentioned])] : [ctx.threadId];
+  }
+
+  // Someone is named but not addressed, in the decision box. If the words fit something to look
+  // at or to change, that is what was meant. If it is a question that fits nothing clearly, the
+  // player is asked, with writing to the person as one of the choices.
+  if (!inThread && recipients.length > 0 && !addressed) {
+    const action = clearAction(sc, index, raw, cleaned, words);
+    if (action.kind === "act") return action.result;
+    if (action.kind === "ask") {
+      const write: Candidate = {
+        label: `Write to ${names(sc, recipients)}`,
+        intent: { kind: "communicate", to: recipients, text: raw },
+        score: 0,
+      };
+      return { kind: "choose", candidates: [...action.candidates.slice(0, 2), write] };
+    }
+  }
 
   if (recipients.length > 0) {
     const request = rank(sc, index, words, "directive")[0];
@@ -282,6 +396,18 @@ function readClause(sc: Scenario, index: Index, rawClause: string, ctx: ReadCont
     if (change && !inquiry) return c.score * (looks ? 0.85 : 1.1);
     return c.score;
   };
+  const exact = exactly(index, words, () => true);
+  if (exact) {
+    const intent = toIntent(sc, exact, raw);
+    return {
+      kind: "act",
+      intent,
+      restatement:
+        intent.kind === "communicate"
+          ? `To ${names(sc, intent.to)} (asks: ${exact.label})`
+          : `Ask Mika: ${exact.label}`,
+    };
+  }
   const ranked = rank(sc, index, words)
     .map((c) => ({ ...c, score: Math.min(1, bias(c)) }))
     .sort((a, b) => b.score - a.score);

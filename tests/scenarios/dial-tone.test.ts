@@ -146,7 +146,7 @@ describe("properties that must hold in every session", () => {
 describe("scenario data", () => {
   it("parses against the schema and is registered", () => {
     expect(ScenarioSchema.safeParse(sc).success).toBe(true);
-    expect(scenarios).toHaveLength(1);
+    expect(scenarios[0]?.scenario).toBe(sc);
     expect(findScenario("dial-tone")?.scenario).toBe(sc);
     expect(findScenario("nope")).toBeUndefined();
   });

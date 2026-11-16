@@ -72,6 +72,8 @@ const SHARED_SYNONYMS: Record<string, string[]> = {
   customer: ["customers", "subscribers", "subscriber", "users", "user"],
   traffic: ["requests", "load", "flood"],
   node: ["nodes", "server", "servers", "box", "boxes", "machine", "machines", "host", "hosts"],
+  // "all" alone is filler, so the two-word form would otherwise be read as just "clear".
+  "all-clear": ["all clear", "allclear"],
 };
 
 const STOPWORDS = new Set(
