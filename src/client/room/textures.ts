@@ -323,3 +323,22 @@ export function drawBubble(ctx: Ctx, text: string) {
   ctx.fillText(text, w / 2, 56);
   ctx.textAlign = "left";
 }
+
+export const TAG_SIZE = [256, 64] as const;
+
+/** A name tag over a visitor's head: who they are, and a red edge once they are overdue. */
+export function drawTag(ctx: Ctx, name: string, overdue: boolean) {
+  const [w, h] = TAG_SIZE;
+  ctx.clearRect(0, 0, w, h);
+  if (name === "") return;
+  ctx.fillStyle = overdue ? PALETTE.signal : PALETTE.paper0;
+  ctx.fillRect(4, 4, w - 8, h - 8);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = PALETTE.ink;
+  ctx.strokeRect(4, 4, w - 8, h - 8);
+  ctx.fillStyle = overdue ? PALETTE.paper0 : PALETTE.ink;
+  ctx.font = `700 30px ${SANS}`;
+  ctx.textAlign = "center";
+  ctx.fillText(name.length > 15 ? `${name.slice(0, 14)}…` : name, w / 2, 43);
+  ctx.textAlign = "left";
+}

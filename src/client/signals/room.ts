@@ -19,6 +19,8 @@ export interface RoomSignals {
   logLines: number;
   /** The desk monitor: how many people are waiting. */
   monitorCount: number;
+  /** Who is standing in the room, longest wait first (at most three). */
+  visitors: { name: string; overdue: boolean; press: boolean; waitingMinutes: number }[];
   /** The phone: lit while anyone other than the press is unanswered. */
   phone: LampState;
   phoneFrom: string | null;
@@ -90,6 +92,16 @@ export function roomSignals(
     },
     logLines,
     monitorCount: threads.filter((t) => t.state !== "").length,
+    visitors: threads
+      .filter((t) => t.state !== "")
+      .sort((a, b) => b.waitingMinutes - a.waitingMinutes)
+      .slice(0, 3)
+      .map((t) => ({
+        name: t.name,
+        overdue: t.state === "Overdue",
+        press: t.press,
+        waitingMinutes: t.waitingMinutes,
+      })),
     phone: lampOf(people),
     phoneFrom: waiting[0]?.name ?? null,
     tv: {
