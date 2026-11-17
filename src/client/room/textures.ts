@@ -5,14 +5,21 @@
 import type { RoomSignals } from "../signals/room.js";
 
 export const PALETTE = {
-  paper0: "#f2ede3",
-  paper1: "#e9e2d4",
-  paper2: "#ddd3c0",
-  ink: "#1b1a17",
-  ink2: "#575248",
-  signal: "#8a3c05",
-  edge: "#7a7363",
-  rule: "#b9b09e",
+  paper0: "#dde6e1",
+  paper1: "#c3d0ca",
+  paper2: "#a3b4ad",
+  ink: "#0f1b1a",
+  ink2: "#34474a",
+  signal: "#b52a10",
+  edge: "#5f7471",
+  rule: "#8da09a",
+  /** The floor: graphite, so the pale desks and screens stand out against it. */
+  floor: "#22323a",
+  /** Room colours: a deep teal wall, a darker side wall, an ochre desk top. */
+  wall: "#2f6a75",
+  wallSide: "#25535d",
+  ceiling: "#1c3a42",
+  ochre: "#d9a62e",
 } as const;
 
 const MONO = '"IBM Plex Mono", monospace';
@@ -288,4 +295,31 @@ export function drawLogbook(ctx: Ctx, lines: number) {
     const length = 0.45 + (((n * 37 + lines * 11) % 50) / 100) * 1;
     ctx.fillRect(112, y + step - 22, (w - 150) * Math.min(length, 0.95), 8);
   }
+}
+
+export const BUBBLE_SIZE = [256, 96] as const;
+
+/** What Mika says: a few words in a speech bubble, with a tail pointing down. */
+export function drawBubble(ctx: Ctx, text: string) {
+  const [w, h] = BUBBLE_SIZE;
+  ctx.clearRect(0, 0, w, h);
+  if (text === "") return;
+  ctx.fillStyle = PALETTE.paper0;
+  ctx.fillRect(6, 6, w - 12, h - 26);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = PALETTE.ink;
+  ctx.strokeRect(6, 6, w - 12, h - 26);
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 14, h - 20);
+  ctx.lineTo(w / 2 + 6, h - 20);
+  ctx.lineTo(w / 2 - 4, h - 3);
+  ctx.closePath();
+  ctx.fillStyle = PALETTE.paper0;
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = PALETTE.ink;
+  ctx.font = `600 40px ${SANS}`;
+  ctx.textAlign = "center";
+  ctx.fillText(text, w / 2, 56);
+  ctx.textAlign = "left";
 }
