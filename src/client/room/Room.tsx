@@ -2,7 +2,15 @@
 // boxes, planes and circles; no model files are loaded (DL-20). This file is a separate chunk
 // that loads while the player reads the briefing.
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import * as THREE from "three";
 import type { RoomSignals } from "../signals/room.js";
 import { brightnessAt, brightnessOf, FADE_MS, flickerAt } from "./light.js";
@@ -17,12 +25,14 @@ import {
   drawClock,
   drawLogbook,
   drawMonitor,
+  drawTag,
   drawPhone,
   drawTelevision,
   LOGBOOK_SIZE,
   MONITOR_SIZE,
   PALETTE,
   PHONE_SIZE,
+  TAG_SIZE,
   TEXTURE_FONTS,
   TV_SIZE,
 } from "./textures.js";
@@ -624,7 +634,9 @@ function Mika({
   steady,
   fontsReady,
   tones,
+  level,
 }: {
+  level: 0 | 1 | 2;
   working: boolean;
   entries: number;
   steady: boolean;
@@ -638,6 +650,7 @@ function Mika({
   const armR = useRef<THREE.Group>(null);
   const foreL = useRef<THREE.Group>(null);
   const foreR = useRef<THREE.Group>(null);
+  const parts = useFaceParts();
   const bubbleRef = useRef<THREE.Group>(null);
   const bubbleMat = useRef<THREE.MeshBasicMaterial>(null);
   const events = useRef({ heard: -99, reported: -99, started: -99, bubble: -99 });
@@ -726,6 +739,13 @@ function Mika({
       }
       head.current.rotation.y += (yaw - head.current.rotation.y) * 0.12;
       head.current.rotation.x += (pitch - head.current.rotation.x) * 0.12;
+    }
+
+    // Mika's nerve goes as the lights do: brows up at level 1, wide-eyed and sweating at 2.
+    const talking = now - e.bubble < 1.2;
+    setFace(parts, 0, level === 0 ? 0 : level === 1 ? 0.5 : 1, talking ? 0.45 : 0, now);
+    if (level === 2 && body.current && mode !== "report") {
+      body.current.position.x = Math.sin(now * 38) * 0.004;
     }
 
     // The speech bubble pops in, stays a moment, and fades.
@@ -817,13 +837,7 @@ function Mika({
 
         <group ref={head} position={[0, 1.4, 0]}>
           <Block size={[0.27, 0.29, 0.27]} position={[0, 0, 0]} colour={SKIN} tones={tones} />
-          <Block
-            size={[0.29, 0.1, 0.29]}
-            position={[0, 0.17, -0.01]}
-            colour={PALETTE.ink}
-            tones={tones}
-            edges={false}
-          />
+          <Hair style={1} colour={PALETTE.ink} tones={tones} />
           {/* Headset band and microphone */}
           <Block
             size={[0.31, 0.03, 0.04]}
@@ -839,16 +853,7 @@ function Mika({
             tones={tones}
             edges={false}
           />
-          {[-0.065, 0.065].map((x) => (
-            <mesh key={x} position={[x, 0.02, 0.137]}>
-              <planeGeometry args={[0.04, 0.05]} />
-              <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
-            </mesh>
-          ))}
-          <mesh position={[0, -0.07, 0.137]}>
-            <planeGeometry args={[0.07, 0.015]} />
-            <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
-          </mesh>
+          <Expression parts={parts} tones={tones} />
         </group>
       </group>
 
@@ -873,8 +878,9 @@ function Mika({
 
 /**
  * The people who are waiting for you. One walks in for each unanswered thread (up to three),
- * stands in the room, paces and gestures at you, and gets frantic once they are overdue. When
- * the thread is answered they leave. They are the same card-stock figures as Mika.
+ * wearing their own name tag. They fidget and ask "Any news?" while they wait; once they are
+ * overdue they go red, glare, shake, stamp, sweat and shout. When the thread is answered
+ * they leave. They are the same card-stock figures as Mika.
  */
 const SLOTS = [
   { x: 0.75, z: -0.9 },
@@ -883,31 +889,213 @@ const SLOTS = [
 ] as const;
 const COATS = ["#d9a62e", "#f4fbf6", "#1f5f6b"] as const;
 const SKINS = ["#8d5a3b", "#e0b08a", "#b9784f"] as const;
+const HAIRS = ["#1b1210", "#6b3a1e", "#2a2a2e"] as const;
 const OFFSTAGE = -5.5;
+const CALM_LINES = ["Hello?", "Any news?", "Excuse me?", "Got a minute?", "Anyone there?"] as const;
+const ANGRY_LINES = [
+  "ANSWER!",
+  "How long?!",
+  "WAITING!",
+  "Hurry up!",
+  "Well?!",
+  "Seriously?!",
+] as const;
+
+interface FaceParts {
+  browL: RefObject<THREE.Mesh | null>;
+  browR: RefObject<THREE.Mesh | null>;
+  mouth: RefObject<THREE.Mesh | null>;
+  flush: RefObject<THREE.MeshBasicMaterial | null>;
+  sweat: RefObject<THREE.Mesh | null>;
+}
+
+/** Eyes with whites, brows that can frown or worry, a mouth that opens, a flush and a sweat drop. */
+function Expression({ parts, tones }: { parts: FaceParts; tones: THREE.DataTexture }) {
+  return (
+    <>
+      {[-0.065, 0.065].map((x) => (
+        <group key={x} position={[x, 0.025, 0.137]}>
+          <mesh>
+            <planeGeometry args={[0.06, 0.055]} />
+            <meshBasicMaterial color={PALETTE.paper0} toneMapped={false} />
+          </mesh>
+          <mesh position={[0, 0, 0.002]}>
+            <planeGeometry args={[0.032, 0.04]} />
+            <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
+          </mesh>
+        </group>
+      ))}
+      <mesh ref={parts.browL} position={[-0.065, 0.075, 0.139]}>
+        <planeGeometry args={[0.08, 0.018]} />
+        <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
+      </mesh>
+      <mesh ref={parts.browR} position={[0.065, 0.075, 0.139]}>
+        <planeGeometry args={[0.08, 0.018]} />
+        <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
+      </mesh>
+      {/* A flush across the cheeks when they lose patience */}
+      <mesh position={[0, -0.035, 0.1375]}>
+        <planeGeometry args={[0.2, 0.05]} />
+        <meshBasicMaterial
+          ref={parts.flush}
+          color="#d6361c"
+          transparent
+          opacity={0}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh ref={parts.mouth} position={[0, -0.075, 0.139]}>
+        <planeGeometry args={[0.075, 0.022]} />
+        <meshBasicMaterial color="#3a0d0a" toneMapped={false} />
+      </mesh>
+      <mesh ref={parts.sweat} position={[0.15, 0.08, 0.1]} visible={false}>
+        <planeGeometry args={[0.04, 0.06]} />
+        <meshBasicMaterial color="#8fd3ee" toneMapped={false} />
+      </mesh>
+      {/* Ears */}
+      {[-1, 1].map((side) => (
+        <Block
+          key={side}
+          size={[0.03, 0.07, 0.05]}
+          position={[side * 0.15, 0, 0]}
+          colour="#b57c58"
+          tones={tones}
+          edges={false}
+        />
+      ))}
+    </>
+  );
+}
+
+function useFaceParts(): FaceParts {
+  return {
+    browL: useRef<THREE.Mesh>(null),
+    browR: useRef<THREE.Mesh>(null),
+    mouth: useRef<THREE.Mesh>(null),
+    flush: useRef<THREE.MeshBasicMaterial>(null),
+    sweat: useRef<THREE.Mesh>(null),
+  };
+}
+
+/** Sets a face for an amount of anger (0 to 1), worry (0 to 1) and how wide the mouth is. */
+function setFace(parts: FaceParts, anger: number, worry: number, mouth: number, t: number) {
+  const tilt = worry * 0.28 - anger * 0.55;
+  const lift = 0.075 - anger * 0.012 + worry * 0.012;
+  if (parts.browL.current) {
+    parts.browL.current.rotation.z = tilt;
+    parts.browL.current.position.y = lift;
+  }
+  if (parts.browR.current) {
+    parts.browR.current.rotation.z = -tilt;
+    parts.browR.current.position.y = lift;
+  }
+  if (parts.mouth.current) {
+    parts.mouth.current.scale.set(1 + mouth * 0.25, 1 + mouth * 2.6, 1);
+    parts.mouth.current.position.y = -0.075 - mouth * 0.012;
+  }
+  if (parts.flush.current) parts.flush.current.opacity = anger * (0.55 + Math.sin(t * 6) * 0.15);
+  const sweating = anger > 0.5 || worry > 0.6;
+  if (parts.sweat.current) {
+    parts.sweat.current.visible = sweating;
+    parts.sweat.current.position.y = 0.1 - ((t * 0.7) % 1) * 0.2;
+  }
+}
+
+/** Three hairstyles: a short crop with a fringe, long hair, and a spiky top. */
+function Hair({
+  style,
+  colour,
+  tones,
+}: {
+  style: number;
+  colour: string;
+  tones: THREE.DataTexture;
+}) {
+  const piece = (
+    size: [number, number, number],
+    position: [number, number, number],
+    key?: string,
+  ) => (
+    <Block
+      key={key ?? position.join()}
+      size={size}
+      position={position}
+      colour={colour}
+      tones={tones}
+      edges={false}
+    />
+  );
+  if (style % 3 === 1) {
+    return (
+      <>
+        {piece([0.3, 0.1, 0.3], [0, 0.17, -0.01])}
+        {piece([0.3, 0.36, 0.07], [0, -0.04, -0.15])}
+        {piece([0.04, 0.3, 0.2], [-0.155, -0.02, -0.04])}
+        {piece([0.04, 0.3, 0.2], [0.155, -0.02, -0.04])}
+      </>
+    );
+  }
+  if (style % 3 === 2) {
+    return (
+      <>
+        {piece([0.29, 0.06, 0.29], [0, 0.16, -0.01])}
+        {piece([0.06, 0.1, 0.06], [-0.09, 0.24, 0])}
+        {piece([0.06, 0.12, 0.06], [0, 0.25, 0])}
+        {piece([0.06, 0.14, 0.06], [0.09, 0.26, 0])}
+      </>
+    );
+  }
+  return (
+    <>
+      {piece([0.29, 0.1, 0.29], [0, 0.17, -0.01])}
+      {piece([0.29, 0.05, 0.05], [0, 0.12, 0.13])}
+    </>
+  );
+}
 
 function Visitor({
   index,
-  present,
-  urgent,
+  who,
   steady,
+  fontsReady,
   tones,
 }: {
   index: number;
-  present: boolean;
-  urgent: boolean;
+  who: RoomSignals["visitors"][number] | undefined;
   steady: boolean;
+  fontsReady: boolean;
   tones: THREE.DataTexture;
 }) {
+  const present = who !== undefined;
+  const urgent = who?.overdue ?? false;
+  const press = who?.press ?? false;
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
   const armL = useRef<THREE.Group>(null);
   const armR = useRef<THREE.Group>(null);
   const legL = useRef<THREE.Group>(null);
   const legR = useRef<THREE.Group>(null);
+  const tagRef = useRef<THREE.Group>(null);
+  const bubbleRef = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.MeshBasicMaterial>(null);
+  const parts = useFaceParts();
   const x = useRef(steady && present ? (SLOTS[index]?.x ?? 0) : OFFSTAGE);
+  const lastCycle = useRef(-1);
+  const [line, setLine] = useState("");
   const slot = SLOTS[index] ?? SLOTS[0];
   const coat = COATS[index % COATS.length] ?? COATS[0];
   const skin = SKINS[index % SKINS.length] ?? SKINS[0];
+  const hair = HAIRS[index % HAIRS.length] ?? HAIRS[0];
+  const name = who?.name ?? "";
+
+  const tag = useDrawn(
+    TAG_SIZE,
+    (ctx) => drawTag(ctx, name, urgent),
+    `${name}|${urgent}`,
+    fontsReady,
+  );
+  const bubble = useDrawn(BUBBLE_SIZE, (ctx) => drawBubble(ctx, line), line, fontsReady);
 
   useFrame((state, delta) => {
     const g = root.current;
@@ -920,16 +1108,48 @@ function Visitor({
     g.visible = x.current > OFFSTAGE + 0.3;
 
     const t = state.clock.elapsedTime + index * 1.7;
-    const agit = urgent ? 1 : 0.45;
-    const pace = walking || steady ? 0 : Math.sin(t * 1.3 * agit) * 0.2 * agit;
+    const anger = urgent ? 1 : 0;
+    const worry = urgent ? 0 : Math.min(1, 0.35 + (who?.waitingMinutes ?? 0) / 30);
+    const agit = urgent ? 1.6 : 0.45;
+    const still = walking || steady;
+
+    // Pacing, stamping and (when overdue) trembling with rage.
+    const pace = still ? 0 : Math.sin(t * 1.3 * agit) * 0.2 * agit;
     const hop = walking
       ? Math.abs(Math.sin(t * 9)) * 0.05
       : steady
         ? 0
-        : Math.abs(Math.sin(t * 4 * agit)) * 0.04 * agit;
-    g.position.set(x.current + pace, hop, slot.z);
-    const turn = walking ? (gap > 0 ? 1 : -1) * 1.1 : 0;
+        : urgent
+          ? Math.abs(Math.sin(t * 7)) * 0.07
+          : Math.abs(Math.sin(t * 4 * agit)) * 0.04 * agit;
+    const tremble = urgent && !still ? Math.sin(t * 47) * 0.012 : 0;
+    g.position.set(x.current + pace + tremble, hop, slot.z);
+    const turn = walking ? (gap > 0 ? 1 : -1) * 1.1 : urgent && !still ? -0.35 : 0;
     g.rotation.y += (turn - g.rotation.y) * 0.2;
+    if (tagRef.current) {
+      tagRef.current.rotation.y = -g.rotation.y;
+      tagRef.current.visible = !walking && present;
+    }
+    if (bubbleRef.current) bubbleRef.current.rotation.y = -g.rotation.y;
+
+    // They speak up on a beat: now and then while waiting, constantly once overdue.
+    const period = urgent ? 2.4 : 6;
+    const cycle = Math.floor((t + 3) / period);
+    const phase = (t + 3) % period;
+    const speaking = !still && present && phase < (urgent ? 1.7 : 1.9);
+    if (cycle !== lastCycle.current && speaking) {
+      lastCycle.current = cycle;
+      const pool = urgent ? ANGRY_LINES : CALM_LINES;
+      setLine(pool[(cycle + index * 2) % pool.length] ?? "");
+    }
+    if (bubbleRef.current) {
+      bubbleRef.current.visible = speaking && line !== "";
+      const pop = Math.min(1, phase / 0.15);
+      bubbleRef.current.scale.setScalar(
+        (0.45 + 0.55 * (1 - (1 - pop) * (1 - pop))) * (urgent ? 1 + Math.sin(t * 22) * 0.04 : 1),
+      );
+    }
+    if (ring.current) ring.current.opacity = urgent && !still ? 0.18 + Math.sin(t * 6) * 0.1 : 0;
 
     const swing = Math.sin(t * 9) * 0.6;
     if (legL.current) legL.current.rotation.x = walking ? swing : 0;
@@ -942,22 +1162,52 @@ function Visitor({
         armL.current.rotation.x = -0.2;
         armR.current.rotation.x = -0.2;
       } else if (urgent) {
-        // One arm up and waving, the other jabbing at you.
-        armR.current.rotation.x = -Math.PI * 0.85 + Math.sin(t * 10) * 0.3;
-        armL.current.rotation.x = -1.25 + Math.sin(t * 6) * 0.25;
+        // One fist raised and shaking, the other jabbing at you.
+        armR.current.rotation.x = -Math.PI * 0.85 + Math.sin(t * 12) * 0.35;
+        armR.current.rotation.z = -0.2 + Math.sin(t * 17) * 0.12;
+        armL.current.rotation.x = -1.35 + Math.sin(t * 8) * 0.4;
       } else {
-        armL.current.rotation.x = -0.5 + Math.sin(t * 3) * 0.4;
-        armR.current.rotation.x = -0.3 + Math.sin(t * 2.3 + 1) * 0.4;
+        // Checking a watch, then a shrug, then a drum of the fingers.
+        const beat = Math.floor(t / 3) % 3;
+        armL.current.rotation.x =
+          beat === 0 ? -1.6 + Math.sin(t * 5) * 0.05 : -0.5 + Math.sin(t * 3) * 0.3;
+        armR.current.rotation.x =
+          beat === 2 ? -0.9 + Math.sin(t * 4) * 0.4 : -0.3 + Math.sin(t * 2.3 + 1) * 0.3;
+        armR.current.rotation.z = 0;
       }
     }
     if (head.current) {
-      head.current.rotation.y = steady ? 0 : Math.sin(t * 0.9) * (walking ? 0 : 0.5 * agit);
-      head.current.rotation.x = steady ? 0 : Math.sin(t * 2.2) * 0.08 * agit;
+      if (steady) {
+        head.current.rotation.set(0, 0, 0);
+      } else if (urgent) {
+        // Chin out, head snapping toward you with each shout.
+        head.current.rotation.y = -0.2 + Math.sin(t * 5) * 0.12;
+        head.current.rotation.x = 0.1 + (speaking ? Math.abs(Math.sin(t * 14)) * 0.12 : 0);
+        head.current.rotation.z = Math.sin(t * 3) * 0.08;
+      } else {
+        head.current.rotation.y = Math.sin(t * 0.9) * (walking ? 0 : 0.5 * agit);
+        head.current.rotation.x = Math.sin(t * 2.2) * 0.08 * agit;
+        head.current.rotation.z = 0;
+      }
     }
+    const mouth = speaking ? (urgent ? 0.5 + Math.abs(Math.sin(t * 14)) * 0.5 : 0.35) : 0;
+    setFace(parts, anger, worry, mouth, t);
   });
 
   return (
     <group ref={root} visible={false} position={[OFFSTAGE, 0, slot.z]}>
+      {/* A red warning ring on the floor under anyone who is overdue */}
+      <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.32, 0.46, 24]} />
+        <meshBasicMaterial
+          ref={ring}
+          color="#ff3b1d"
+          transparent
+          opacity={0}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
       {([-1, 1] as const).map((side) => (
         <group key={side} ref={side < 0 ? legL : legR} position={[side * 0.1, 0.8, 0]}>
           <Block
@@ -966,39 +1216,65 @@ function Visitor({
             colour={PALETTE.ink2}
             tones={tones}
           />
-        </group>
-      ))}
-      <Block size={[0.44, 0.58, 0.26]} position={[0, 1.09, 0]} colour={coat} tones={tones} />
-      {([-1, 1] as const).map((side) => (
-        <group key={side} ref={side < 0 ? armL : armR} position={[side * 0.29, 1.33, 0]}>
-          <Block size={[0.1, 0.5, 0.1]} position={[0, -0.25, 0]} colour={coat} tones={tones} />
           <Block
-            size={[0.09, 0.09, 0.09]}
-            position={[0, -0.54, 0]}
-            colour={skin}
+            size={[0.17, 0.08, 0.28]}
+            position={[0, -0.76, 0.05]}
+            colour={PALETTE.ink}
             tones={tones}
             edges={false}
           />
         </group>
       ))}
+      <Block size={[0.44, 0.58, 0.26]} position={[0, 1.09, 0]} colour={coat} tones={tones} />
+      {/* A tie or lanyard, so each one reads differently from the front */}
+      <mesh position={[0, 1.07, 0.133]}>
+        <planeGeometry args={[index === 1 ? 0.06 : 0.04, 0.4]} />
+        <meshBasicMaterial color={index === 0 ? PALETTE.signal : PALETTE.ink} toneMapped={false} />
+      </mesh>
+      {([-1, 1] as const).map((side) => (
+        <group key={side} ref={side < 0 ? armL : armR} position={[side * 0.29, 1.33, 0]}>
+          <Block size={[0.1, 0.5, 0.1]} position={[0, -0.25, 0]} colour={coat} tones={tones} />
+          <Block
+            size={[0.11, 0.11, 0.11]}
+            position={[0, -0.55, 0]}
+            colour={skin}
+            tones={tones}
+            edges={false}
+          />
+          {press && side > 0 && (
+            // Reporters carry a notepad.
+            <Block
+              size={[0.16, 0.2, 0.02]}
+              position={[0, -0.6, 0.08]}
+              colour={PALETTE.paper0}
+              tones={tones}
+            />
+          )}
+        </group>
+      ))}
+      <Block
+        size={[0.1, 0.06, 0.1]}
+        position={[0, 1.4, 0]}
+        colour={skin}
+        tones={tones}
+        edges={false}
+      />
       <group ref={head} position={[0, 1.59, 0]}>
         <Block size={[0.27, 0.29, 0.27]} position={[0, 0, 0]} colour={skin} tones={tones} />
-        <Block
-          size={[0.29, 0.1, 0.29]}
-          position={[0, 0.17, -0.01]}
-          colour={PALETTE.ink}
-          tones={tones}
-          edges={false}
-        />
-        {[-0.065, 0.065].map((ex) => (
-          <mesh key={ex} position={[ex, 0.02, 0.137]}>
-            <planeGeometry args={[0.04, 0.05]} />
-            <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
-          </mesh>
-        ))}
-        <mesh position={[0, -0.07, 0.137]}>
-          <planeGeometry args={[0.08, 0.02]} />
-          <meshBasicMaterial color={PALETTE.ink} toneMapped={false} />
+        <Hair style={index} colour={hair} tones={tones} />
+        <Expression parts={parts} tones={tones} />
+      </group>
+
+      <group ref={tagRef} position={[0, 1.95, 0]} visible={false}>
+        <mesh>
+          <planeGeometry args={[0.46, 0.115]} />
+          <meshBasicMaterial map={tag} transparent toneMapped={false} />
+        </mesh>
+      </group>
+      <group ref={bubbleRef} position={[0, 2.2, 0.1]} visible={false}>
+        <mesh>
+          <planeGeometry args={[0.62, 0.232]} />
+          <meshBasicMaterial map={bubble} transparent toneMapped={false} />
         </mesh>
       </group>
     </group>
@@ -1150,9 +1426,9 @@ function Scene({
         <Visitor
           key={i}
           index={i}
-          present={signals.monitorCount > i}
-          urgent={signals.phone === "overdue" || signals.tv.waiting === "overdue"}
+          who={signals.visitors[i]}
           steady={steady}
+          fontsReady={fontsReady}
           tones={tones}
         />
       ))}
@@ -1213,6 +1489,7 @@ function Scene({
       <group position={[2.7, 0, -1.6]}>
         <ContactShadow size={[1.9, 1.1]} position={[0, 0.004, 0]} />
         <Mika
+          level={signals.level}
           working={signals.mikaLamp}
           entries={signals.logLines}
           steady={steady}
