@@ -1,6 +1,6 @@
 // The brownout. Three light levels follow severity; a change is a short fade with at most two
 // brief dips, so it reads as mains power sagging without ever flashing fast enough to be a
-// hazard (WCAG 2.3.1 allows no more than three flashes in a second; this stays at two).
+// hazard (WCAG 2.3.1 allows no more than three flashes in a second; the stutters here are two a few seconds apart).
 
 export const LEVELS = [1, 0.7, 0.45] as const;
 export const FADE_MS = 600;
@@ -10,6 +10,23 @@ const DIPS = [
   { at: 0.25, depth: 0.22, width: 0.09 },
   { at: 0.6, depth: 0.14, width: 0.08 },
 ] as const;
+
+/**
+ * The ceiling tubes' hum. A multiplier on brightness, 1 when all is well. When the incident is
+ * running the tubes waver a few percent; browned out they also stutter twice every few seconds.
+ * Never more than three dips of 10 percent or more in a second (WCAG 2.3.1; a test holds this).
+ */
+export function flickerAt(seconds: number, level: 0 | 1 | 2): number {
+  if (level === 0) return 1;
+  const wave = Math.sin(seconds * 2.1) * Math.sin(seconds * 5.3 + 1);
+  let v = 1 - (level === 1 ? 0.05 : 0.08) * Math.abs(wave);
+  if (level === 2) {
+    const p = seconds % 7.3;
+    if (p < 0.12) v -= 0.28;
+    else if (p > 0.34 && p < 0.44) v -= 0.18;
+  }
+  return Math.max(0.6, v);
+}
 
 export const brightnessOf = (level: 0 | 1 | 2): number => LEVELS[level];
 
