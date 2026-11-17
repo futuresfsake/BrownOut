@@ -5,6 +5,9 @@ import type { Scenario } from "../engine/schema.js";
 import { accuracy as dialToneAccuracy, type AccuracyCase } from "./dial-tone/accuracy.js";
 import { playthroughs as dialTonePlaythroughs } from "./dial-tone/playthroughs.js";
 import { dialTone } from "./dial-tone/scenario.js";
+import { accuracy as doubleChargeAccuracy } from "./double-charge/accuracy.js";
+import { playthroughs as doubleChargePlaythroughs } from "./double-charge/playthroughs.js";
+import { doubleCharge } from "./double-charge/scenario.js";
 import { accuracy as openBucketAccuracy } from "./open-bucket/accuracy.js";
 import { playthroughs as openBucketPlaythroughs } from "./open-bucket/playthroughs.js";
 import { openBucket } from "./open-bucket/scenario.js";
@@ -38,6 +41,12 @@ export const scenarios: ScenarioEntry[] = [
     scenario: slowBurn,
     playthroughs: slowBurnPlaythroughs,
     accuracy: slowBurnAccuracy,
+  },
+  {
+    catalogue: "S-032",
+    scenario: doubleCharge,
+    playthroughs: doubleChargePlaythroughs,
+    accuracy: doubleChargeAccuracy,
   },
 ];
 
