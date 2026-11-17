@@ -124,6 +124,21 @@ describe("what the room shows", () => {
     expect(after.phoneFrom === null).toBe(stillWaiting.length === 0);
   });
 
+  it("puts a named person in the room for each waiting thread, longest wait first", () => {
+    const g = wait(start(), 2);
+    const s = signalsOf(g);
+    const waiting = threadViews(dialTone, g.session)
+      .filter((t) => t.state !== "")
+      .sort((a, b) => b.waitingMinutes - a.waitingMinutes);
+    expect(s.visitors.length).toBe(Math.min(waiting.length, 3));
+    expect(s.visitors.map((v) => v.name)).toEqual(waiting.slice(0, 3).map((t) => t.name));
+    for (const v of s.visitors) {
+      const thread = waiting.find((t) => t.name === v.name);
+      expect(v.overdue).toBe(thread?.state === "Overdue");
+    }
+    expect(signalsOf(start()).visitors).toEqual([]);
+  });
+
   it("agrees with the inbox panel at every step of a whole session", () => {
     let g = start();
     let lit = 0;
