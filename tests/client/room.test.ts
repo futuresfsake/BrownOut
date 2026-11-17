@@ -43,6 +43,7 @@ import {
   stationOf,
   STATIONS,
 } from "../../src/client/room/stations.js";
+import { flickerAt } from "../../src/client/room/light.js";
 import { fit, wrap } from "../../src/client/room/textures.js";
 import {
   describeRoom,
@@ -472,6 +473,44 @@ describe("sound", () => {
       const tones = TONES[cue];
       for (const tone of tones) expect(tone.peak).toBeLessThanOrEqual(0.1);
       expect(tones.length / Math.max(lengthOf(cue), 1)).toBeLessThanOrEqual(3);
+    }
+  });
+});
+
+describe("the hum of the lights", () => {
+  it("does nothing while all is well", () => {
+    for (let t = 0; t < 30; t += 0.05) expect(flickerAt(t, 0)).toBe(1);
+  });
+
+  it("wavers once the incident runs, and stutters when browned out, but never goes dark", () => {
+    let low = 1;
+    for (let t = 0; t < 60; t += 0.01) {
+      const v = flickerAt(t, 2);
+      expect(v).toBeGreaterThanOrEqual(0.6);
+      expect(v).toBeLessThanOrEqual(1);
+      low = Math.min(low, v);
+    }
+    expect(low).toBeLessThan(0.8);
+    let running = 1;
+    for (let t = 0; t < 60; t += 0.01) running = Math.min(running, flickerAt(t, 1));
+    expect(running).toBeGreaterThan(0.9);
+  });
+
+  it("never dips by 10 percent or more more than three times in any second (WCAG 2.3.1)", () => {
+    for (const level of [1, 2] as const) {
+      const step = 0.005;
+      const dips: number[] = [];
+      // A dip is one unbroken stretch below 90 percent, however it wobbles inside.
+      let below = false;
+      for (let t = 0; t < 60; t += step) {
+        const now = flickerAt(t, level) < 0.9;
+        if (now && !below) dips.push(t);
+        below = now;
+      }
+      for (const start of dips) {
+        const inWindow = dips.filter((x) => x >= start && x < start + 1).length;
+        expect(inWindow, `level ${level} near ${start.toFixed(2)}s`).toBeLessThanOrEqual(3);
+      }
     }
   });
 });
